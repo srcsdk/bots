@@ -1,1 +1,1 @@
-requests>=2.25.0
+# stdlib only (urllib, json, csv, math, tkinter)
