@@ -1,0 +1,22 @@
+trading bot project
+
+goals:
+- fetch ohlc data from yahoo finance
+- calculate technical indicators (rsi, macd, bollinger, atr)
+- build strategies that combine multiple signals
+- backtest strategies against historical data
+
+architecture:
+- ohlc.py: data fetching
+- indicators.py: technical indicator calculations
+- strategy modules: individual strategy implementations
+- backtest.py: run strategies against historical data
+
+data sources:
+- yahoo finance api (free, no key needed)
+- possibly add other sources later
+
+timeline:
+- december: get data pipeline working, basic indicators
+- january: first strategies
+- february+: iterate and improve
