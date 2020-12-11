@@ -1,0 +1,35 @@
+technical analysis research notes
+
+indicators to implement:
+- rsi (relative strength index): momentum oscillator 0-100
+  oversold < 30, overbought > 70
+  wilder smoothing method preferred over simple
+  
+- macd (moving average convergence divergence):
+  macd line = ema(12) - ema(26)
+  signal line = ema(9) of macd line
+  histogram = macd - signal
+  crossovers generate buy/sell signals
+
+- bollinger bands:
+  middle = sma(20)
+  upper = middle + 2*stdev
+  lower = middle - 2*stdev
+  squeeze = low bandwidth, expansion coming
+
+- atr (average true range):
+  true range = max(h-l, abs(h-prev_c), abs(l-prev_c))
+  atr = ema or wilder smooth of true ranges
+  useful for position sizing and stop losses
+
+strategy ideas:
+- mean reversion: buy when price touches lower bollinger
+- momentum: buy on macd crossover with rsi confirmation
+- gap plays: look for gap-up with volume confirmation
+- 52-week breakouts: price near 52wk high with volume
+
+data considerations:
+- yahoo finance has free ohlcv data
+- need to handle splits and dividends
+- watch out for weekend/holiday gaps
+- use adjusted close for accurate returns
