@@ -6,13 +6,6 @@ from ohlc import fetch_ohlc
 from indicators import rsi, macd, fifty_two_week_low, gap_percent
 
 
-# entry criteria:
-# 1. rsi oversold (<30)
-# 2. macd histogram turning up from negative
-# 3. price within 5% of 52-week low
-# 4. recent gap down (>2%) in last 5 bars
-
-
 def scan(ticker, period="1y"):
     """scan for gapup buy signals"""
     rows = fetch_ohlc(ticker, period)
@@ -50,6 +43,7 @@ def scan(ticker, period="1y"):
                 "price": closes[i],
                 "rsi": rsi_vals[i],
                 "macd_hist": hist[i],
+                "gap": gaps[i],
             })
 
     return signals
@@ -70,5 +64,6 @@ if __name__ == "__main__":
         print("no signals found")
     else:
         for s in signals:
-            print(f"  {s['date']} ${s['price']:.2f} rsi={s['rsi']:.1f}")
+            print(f"  {s['date']} ${s['price']:.2f} "
+                  f"rsi={s['rsi']:.1f} hist={s['macd_hist']:.4f}")
         print(f"\n{len(signals)} signals")
