@@ -4,7 +4,7 @@ indicators to implement:
 - rsi (relative strength index): momentum oscillator 0-100
   oversold < 30, overbought > 70
   wilder smoothing method preferred over simple
-  
+
 - macd (moving average convergence divergence):
   macd line = ema(12) - ema(26)
   signal line = ema(9) of macd line
@@ -33,3 +33,9 @@ data considerations:
 - need to handle splits and dividends
 - watch out for weekend/holiday gaps
 - use adjusted close for accurate returns
+
+gapup signal format notes:
+- each signal should include date, price, rsi, macd histogram, gap pct
+- log signals as they are found for debugging
+- format output consistently across all strategies
+- consider adding a signal strength score later
