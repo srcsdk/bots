@@ -34,18 +34,8 @@ data considerations:
 - watch out for weekend/holiday gaps
 - use adjusted close for accurate returns
 
-volume analysis:
-- volume sma(20) as baseline for normal volume
-- volume surge = current vol > 1.5x vol_sma
-- combine with price breakout above sma for momentum signals
-- gap percent measures overnight moves from prev close to open
-
-signal format (shared across strategies):
-- every signal dict must have: date, price
-- strategy-specific fields are optional extras
-- gapup adds: rsi, macd_hist, gap
-- movo adds: volume, vol_ratio, rsi
-- nobr adds: rsi
-- mobr adds: type
-- output format: "  {date} ${price:.2f} [extras]"
-- consistent print loop and count at the end
+gapup signal format notes:
+- each signal should include date, price, rsi, macd histogram, gap pct
+- log signals as they are found for debugging
+- format output consistently across all strategies
+- consider adding a signal strength score later
