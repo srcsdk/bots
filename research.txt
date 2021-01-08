@@ -34,6 +34,12 @@ data considerations:
 - watch out for weekend/holiday gaps
 - use adjusted close for accurate returns
 
+volume analysis:
+- volume sma(20) as baseline for normal volume
+- volume surge = current vol > 1.5x vol_sma
+- combine with price breakout above sma for momentum signals
+- gap percent measures overnight moves from prev close to open
+
 gapup signal format notes:
 - each signal should include date, price, rsi, macd histogram, gap pct
 - log signals as they are found for debugging
