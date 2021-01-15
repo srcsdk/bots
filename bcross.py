@@ -45,8 +45,6 @@ def scan(ticker, period="1y"):
                 "date": rows[i]["date"],
                 "price": closes[i],
                 "rsi": rsi_vals[i],
-                "macd": macd_line[i],
-                "signal": signal_line[i],
             })
 
     return signals
@@ -67,6 +65,5 @@ if __name__ == "__main__":
         print("no signals found")
     else:
         for s in signals:
-            print(f"  {s['date']} ${s['price']:.2f} "
-                  f"rsi={s['rsi']:.1f} macd={s['macd']:.4f}")
+            print(f"  {s['date']} ${s['price']:.2f} rsi={s['rsi']:.1f}")
         print(f"\n{len(signals)} signals")
