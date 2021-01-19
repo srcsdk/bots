@@ -18,5 +18,12 @@ data sources:
 
 timeline:
 - december: get data pipeline working, basic indicators
-- january: first strategies
+- january: first strategies (gapup, movo, bcross)
 - february+: iterate and improve
+
+backtesting notes:
+- gapup: signals are rare, need multi-year data to validate
+- bcross: stricter than gapup (requires macd crossover not just turning)
+- both rely on 52wk low proximity, may cluster in drawdowns
+- need to track win rate and avg return per signal
+- consider adding holding period analysis (5d, 10d, 20d returns)
