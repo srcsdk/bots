@@ -4,7 +4,6 @@
 import json
 import re
 import sys
-import time
 from collections import Counter
 from urllib.request import urlopen, Request
 from urllib.error import URLError
@@ -38,29 +37,12 @@ def fetch_reddit_json(subreddit, sort="hot", limit=100):
 def extract_tickers(text):
     """extract stock tickers from text ($AAPL or standalone caps)"""
     dollar_tickers = re.findall(r'\$([A-Z]{1,5})\b', text)
-    word_tickers = re.findall(r'\b([A-Z]{2,5})\b', text)
-
-    noise = {
-        "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL",
-        "CAN", "HAS", "HER", "WAS", "ONE", "OUR", "OUT", "HIS",
-        "HIM", "HOW", "ITS", "MAY", "NEW", "NOW", "OLD", "SEE",
-        "WAY", "WHO", "BOY", "DID", "GET", "HAS", "LET", "SAY",
-        "SHE", "TOO", "USE", "IMO", "YOLO", "DD", "WSB", "HOLD",
-        "BUY", "SELL", "MOON", "GANG", "PUTS", "CALL", "EDIT",
-        "TLDR", "LOL", "OMG", "WTF", "FYI", "PSA", "LMAO",
-        "SEC", "ETF", "IPO", "CEO", "CFO", "GDP", "FDA", "NYSE",
-        "FOMO", "HODL", "APES", "THIS", "THAT", "WITH", "FROM",
-        "JUST", "BEEN", "HAVE", "WILL", "WHAT", "WHEN", "YOUR",
-        "THEY", "THEM", "BEEN", "SOME", "THAN", "THEN", "VERY",
-    }
-
-    tickers = dollar_tickers + [t for t in word_tickers if t not in noise]
-    return tickers
+    return dollar_tickers
 
 
-def scan_subreddit(subreddit, sort="hot", limit=100):
-    """scan a subreddit for ticker mentions"""
-    posts = fetch_reddit_json(subreddit, sort, limit)
+def scan_wsb(limit=100):
+    """scan wallstreetbets specifically"""
+    posts = fetch_reddit_json("wallstreetbets", "hot", limit)
     if not posts:
         return Counter()
 
@@ -68,56 +50,25 @@ def scan_subreddit(subreddit, sort="hot", limit=100):
     for post in posts:
         text = post["title"] + " " + post["selftext"]
         tickers = extract_tickers(text)
-        weight = max(1, post["score"] // 100) + max(1, post["num_comments"] // 50)
         for t in tickers:
-            all_tickers[t] += weight
+            all_tickers[t] += 1
 
     return all_tickers
 
 
-def scan_wsb(limit=100):
-    """scan wallstreetbets specifically"""
-    return scan_subreddit("wallstreetbets", "hot", limit)
-
-
-def scan_multi(subreddits, limit=50):
-    """scan multiple subreddits and combine"""
-    combined = Counter()
-    for sub in subreddits:
-        print(f"  scanning r/{sub}...")
-        counts = scan_subreddit(sub, "hot", limit)
-        combined.update(counts)
-        time.sleep(2)
-    return combined
-
-
 if __name__ == "__main__":
-    subs = ["wallstreetbets"]
     limit = 100
-
-    if "--multi" in sys.argv:
-        subs = [
-            "wallstreetbets", "stocks", "investing",
-            "options", "pennystocks", "smallstreetbets",
-        ]
-        limit = 50
-
     if "--limit" in sys.argv:
         idx = sys.argv.index("--limit")
         if idx + 1 < len(sys.argv):
             limit = int(sys.argv[idx + 1])
 
-    print(f"scanning {', '.join(subs)} (limit={limit})")
-
-    if len(subs) == 1:
-        tickers = scan_subreddit(subs[0], "hot", limit)
-    else:
-        tickers = scan_multi(subs, limit)
+    print(f"scanning r/wallstreetbets (limit={limit})")
+    tickers = scan_wsb(limit)
 
     if not tickers:
         print("no tickers found")
     else:
         print(f"\ntop mentions:")
         for ticker, count in tickers.most_common(20):
-            bar = "#" * min(count, 40)
-            print(f"  ${ticker:<6} {count:>4} {bar}")
+            print(f"  ${ticker:<6} {count:>4}")
