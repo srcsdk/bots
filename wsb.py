@@ -37,12 +37,29 @@ def fetch_reddit_json(subreddit, sort="hot", limit=100):
 def extract_tickers(text):
     """extract stock tickers from text ($AAPL or standalone caps)"""
     dollar_tickers = re.findall(r'\$([A-Z]{1,5})\b', text)
-    return dollar_tickers
+    word_tickers = re.findall(r'\b([A-Z]{2,5})\b', text)
+
+    noise = {
+        "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL",
+        "CAN", "HAS", "HER", "WAS", "ONE", "OUR", "OUT", "HIS",
+        "HIM", "HOW", "ITS", "MAY", "NEW", "NOW", "OLD", "SEE",
+        "WAY", "WHO", "BOY", "DID", "GET", "HAS", "LET", "SAY",
+        "SHE", "TOO", "USE", "IMO", "YOLO", "DD", "WSB", "HOLD",
+        "BUY", "SELL", "MOON", "GANG", "PUTS", "CALL", "EDIT",
+        "TLDR", "LOL", "OMG", "WTF", "FYI", "PSA", "LMAO",
+        "SEC", "ETF", "IPO", "CEO", "CFO", "GDP", "FDA", "NYSE",
+        "FOMO", "HODL", "APES", "THIS", "THAT", "WITH", "FROM",
+        "JUST", "BEEN", "HAVE", "WILL", "WHAT", "WHEN", "YOUR",
+        "THEY", "THEM", "BEEN", "SOME", "THAN", "THEN", "VERY",
+    }
+
+    tickers = dollar_tickers + [t for t in word_tickers if t not in noise]
+    return tickers
 
 
-def scan_wsb(limit=100):
-    """scan wallstreetbets specifically"""
-    posts = fetch_reddit_json("wallstreetbets", "hot", limit)
+def scan_subreddit(subreddit, sort="hot", limit=100):
+    """scan a subreddit for ticker mentions"""
+    posts = fetch_reddit_json(subreddit, sort, limit)
     if not posts:
         return Counter()
 
@@ -50,10 +67,16 @@ def scan_wsb(limit=100):
     for post in posts:
         text = post["title"] + " " + post["selftext"]
         tickers = extract_tickers(text)
+        weight = max(1, post["score"] // 100) + max(1, post["num_comments"] // 50)
         for t in tickers:
-            all_tickers[t] += 1
+            all_tickers[t] += weight
 
     return all_tickers
+
+
+def scan_wsb(limit=100):
+    """scan wallstreetbets specifically"""
+    return scan_subreddit("wallstreetbets", "hot", limit)
 
 
 if __name__ == "__main__":
