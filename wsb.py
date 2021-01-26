@@ -4,6 +4,7 @@
 import json
 import re
 import sys
+import time
 from collections import Counter
 from urllib.request import urlopen, Request
 from urllib.error import URLError
@@ -79,19 +80,44 @@ def scan_wsb(limit=100):
     return scan_subreddit("wallstreetbets", "hot", limit)
 
 
+def scan_multi(subreddits, limit=50):
+    """scan multiple subreddits and combine"""
+    combined = Counter()
+    for sub in subreddits:
+        print(f"  scanning r/{sub}...")
+        counts = scan_subreddit(sub, "hot", limit)
+        combined.update(counts)
+        time.sleep(2)
+    return combined
+
+
 if __name__ == "__main__":
+    subs = ["wallstreetbets"]
     limit = 100
+
+    if "--multi" in sys.argv:
+        subs = [
+            "wallstreetbets", "stocks", "investing",
+            "options", "pennystocks", "smallstreetbets",
+        ]
+        limit = 50
+
     if "--limit" in sys.argv:
         idx = sys.argv.index("--limit")
         if idx + 1 < len(sys.argv):
             limit = int(sys.argv[idx + 1])
 
-    print(f"scanning r/wallstreetbets (limit={limit})")
-    tickers = scan_wsb(limit)
+    print(f"scanning {', '.join(subs)} (limit={limit})")
+
+    if len(subs) == 1:
+        tickers = scan_subreddit(subs[0], "hot", limit)
+    else:
+        tickers = scan_multi(subs, limit)
 
     if not tickers:
         print("no tickers found")
     else:
         print(f"\ntop mentions:")
         for ticker, count in tickers.most_common(20):
-            print(f"  ${ticker:<6} {count:>4}")
+            bar = "#" * min(count, 40)
+            print(f"  ${ticker:<6} {count:>4} {bar}")
