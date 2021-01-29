@@ -21,6 +21,12 @@ timeline:
 - january: first strategies (gapup, movo, bcross)
 - february+: iterate and improve
 
+indicator imports pattern:
+- gapup, bcross, across: rsi, macd, fifty_two_week_low, gap_percent
+- movo: rsi, macd, fifty_two_week_low, sma, volume_sma, atr
+- all strategies use fetch_ohlc from ohlc module
+- keep imports explicit, no wildcard imports
+
 backtesting notes:
 - gapup: signals are rare, need multi-year data to validate
 - bcross: stricter than gapup (requires macd crossover not just turning)
