@@ -117,7 +117,7 @@ if __name__ == "__main__":
     if not tickers:
         print("no tickers found")
     else:
-        print("\ntop mentions:")
+        print(f"\ntop mentions:")
         for ticker, count in tickers.most_common(20):
             bar = "#" * min(count, 40)
             print(f"  ${ticker:<6} {count:>4} {bar}")
