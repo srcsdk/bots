@@ -5,8 +5,7 @@ import csv
 import json
 import sys
 import time
-import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
@@ -43,18 +42,18 @@ def fetch_ohlc(ticker, period="1y", interval="1d"):
     for i, ts in enumerate(timestamps):
         o = quote.get("open", [None])[i]
         h = quote.get("high", [None])[i]
-        low = quote.get("low", [None])[i]
+        l = quote.get("low", [None])[i]
         c = quote.get("close", [None])[i]
         v = quote.get("volume", [None])[i]
 
-        if None in (o, h, low, c):
+        if None in (o, h, l, c):
             continue
 
         rows.append({
             "date": datetime.fromtimestamp(ts).strftime("%Y-%m-%d"),
             "open": round(o, 2),
             "high": round(h, 2),
-            "low": round(low, 2),
+            "low": round(l, 2),
             "close": round(c, 2),
             "volume": v or 0,
         })
@@ -102,24 +101,3 @@ if __name__ == "__main__":
               f"{r['low']:>8.2f} {r['close']:>8.2f} {r['volume']:>12,}")
 
     print(f"\n{len(rows)} rows ({rows[0]['date']} to {rows[-1]['date']})")
-
-
-def cache_path(ticker, period, interval):
-    """get cache file path for a ticker"""
-    cache_dir = os.path.join(os.path.dirname(__file__), ".cache")
-    os.makedirs(cache_dir, exist_ok=True)
-    return os.path.join(cache_dir, f"{ticker}_{period}_{interval}.json")
-
-
-def fetch_cached(ticker, period="1y", interval="1d", max_age=3600):
-    """fetch ohlc data with local file caching"""
-    path = cache_path(ticker, period, interval)
-    if os.path.exists(path):
-        age = time.time() - os.path.getmtime(path)
-        if age < max_age:
-            with open(path, "r") as f:
-                return json.load(f)
-    rows = fetch_ohlc(ticker, period, interval)
-    if rows:
-        save_json(rows, path)
-    return rows
