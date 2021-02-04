@@ -7,6 +7,16 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError
 
 
+def safe_request(url, timeout=10):
+    """wrapper around urllib that catches exceptions and returns None on failure"""
+    req = Request(url, headers={"User-Agent": "market-scanner/1.0"})
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            return resp.read()
+    except (URLError, OSError, ValueError):
+        return None
+
+
 FRED_BASE = "https://api.stlouisfed.org/fred"
 SEC_BASE = "https://efts.sec.gov/LATEST/search-index"
 

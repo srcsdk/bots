@@ -57,13 +57,10 @@ def scan_nolo(ticker, period="1y"):
         return []
 
     closes = [r["close"] for r in rows]
-    opens = [r["open"] for r in rows]
 
     rsi_vals = rsi(closes, 14)
     macd_line, signal_line, _ = macd(closes)
     low_52 = fifty_two_week_low(closes)
-    gaps = gap_percent(opens, closes)
-
     signals = []
     for i in range(1, len(rows)):
         if rsi_vals[i] is None or macd_line[i] is None:
@@ -92,14 +89,18 @@ def scan_nolo(ticker, period="1y"):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("usage: python across.py <ticker> [period]")
+        print("usage: python across.py <ticker> [--nolo] [period]")
         sys.exit(1)
 
-    ticker = sys.argv[1].upper()
-    period = sys.argv[2] if len(sys.argv) > 2 else "1y"
+    nolo = "--nolo" in sys.argv
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    ticker = args[0].upper()
+    period = args[1] if len(args) > 1 else "1y"
 
-    print(f"across scan: {ticker} ({period})")
-    signals = scan(ticker, period)
+    name = "nolo" if nolo else "across"
+    print(f"{name} scan: {ticker} ({period})")
+
+    signals = scan_nolo(ticker, period) if nolo else scan(ticker, period)
 
     if not signals:
         print("no signals found")
