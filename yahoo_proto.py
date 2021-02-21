@@ -43,7 +43,7 @@ def test_yahoo_api(ticker):
 
     if timestamps:
         print(f"\nfields available: {list(quote.keys())}")
-        print(f"\nlast 5 days:")
+        print("\nlast 5 days:")
         for i in range(-5, 0):
             if abs(i) <= len(timestamps):
                 idx = len(timestamps) + i
