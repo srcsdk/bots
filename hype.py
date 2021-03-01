@@ -244,7 +244,11 @@ def detect_hype_cycles(ticker_data, window_hours=6):
 
 
 def compute_hype_score(mentions, sentiment, source_count):
-    """compute a composite hype score from mentions, sentiment, and breadth."""
+    """compute a composite hype score from mentions, sentiment, and breadth.
+
+    Score weights volume heavily, adds a sentiment bonus, and rewards
+    tickers mentioned across multiple sources.
+    """
     volume_score = mentions
     sentiment_bonus = max(0, sentiment) * mentions * 0.5
     breadth_bonus = (source_count - 1) * mentions * 0.25 if source_count > 1 else 0
