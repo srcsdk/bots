@@ -6,7 +6,7 @@ mobr: nobr + movo combined"""
 import sys
 from ohlc import fetch_ohlc
 from indicators import (rsi, macd, fifty_two_week_low, sma,
-                         volume_sma, atr)
+                        volume_sma)
 
 
 def scan_movo(ticker, period="1y"):
@@ -17,15 +17,11 @@ def scan_movo(ticker, period="1y"):
 
     closes = [r["close"] for r in rows]
     volumes = [r["volume"] for r in rows]
-    highs = [r["high"] for r in rows]
-    lows = [r["low"] for r in rows]
 
     sma_20 = sma(closes, 20)
     sma_50 = sma(closes, 50)
     vol_sma = volume_sma(volumes, 20)
     rsi_vals = rsi(closes, 14)
-    atr_vals = atr(highs, lows, closes, 14)
-
     signals = []
     for i in range(1, len(rows)):
         if sma_20[i] is None or sma_50[i] is None:
