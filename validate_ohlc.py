@@ -46,6 +46,7 @@ def validate_series(rows):
 
     all_issues = []
     dates_seen = set()
+    prev_date = None
 
     for i, row in enumerate(rows):
         row_issues = validate_row(row)
@@ -58,6 +59,7 @@ def validate_series(rows):
             all_issues.append({"index": i, "date": date,
                                "issues": ["duplicate date"]})
         dates_seen.add(date)
+        prev_date = date
 
     return {
         "valid": len(all_issues) == 0,
