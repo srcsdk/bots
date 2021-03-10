@@ -167,3 +167,140 @@ def gap_percent(opens, prev_closes):
         else:
             result.append(None)
     return result
+
+
+def sharpe_ratio(returns, risk_free_rate=0.02, periods=252):
+    """calculate annualized sharpe ratio from daily returns"""
+    if not returns or len(returns) < 2:
+        return None
+    daily_rf = risk_free_rate / periods
+    excess = [r - daily_rf for r in returns]
+    mean_excess = sum(excess) / len(excess)
+    variance = sum((r - mean_excess) ** 2 for r in excess) / (len(excess) - 1)
+    std = variance ** 0.5
+    if std == 0:
+        return None
+    return round(mean_excess / std * (periods ** 0.5), 4)
+
+
+def max_drawdown(prices):
+    """calculate maximum drawdown from a price series"""
+    if not prices or len(prices) < 2:
+        return 0
+    peak = prices[0]
+    max_dd = 0
+    for price in prices:
+        if price > peak:
+            peak = price
+        dd = (peak - price) / peak
+        if dd > max_dd:
+            max_dd = dd
+    return round(max_dd * 100, 2)
+
+
+def vwap(closes, volumes):
+    """volume weighted average price"""
+    if len(closes) != len(volumes):
+        return [None] * len(closes)
+    result = []
+    cum_vol = 0
+    cum_pv = 0
+    for i in range(len(closes)):
+        cum_vol += volumes[i]
+        cum_pv += closes[i] * volumes[i]
+        if cum_vol > 0:
+            result.append(round(cum_pv / cum_vol, 2))
+        else:
+            result.append(None)
+    return result
+
+
+def obv(closes, volumes):
+    """on-balance volume"""
+    if len(closes) < 2:
+        return [0] * len(closes)
+    result = [0]
+    for i in range(1, len(closes)):
+        if closes[i] > closes[i - 1]:
+            result.append(result[-1] + volumes[i])
+        elif closes[i] < closes[i - 1]:
+            result.append(result[-1] - volumes[i])
+        else:
+            result.append(result[-1])
+    return result
+
+
+def adl(highs, lows, closes, volumes):
+    """accumulation/distribution line"""
+    result = [0]
+    for i in range(len(closes)):
+        hl = highs[i] - lows[i]
+        if hl == 0:
+            mfv = 0
+        else:
+            mfm = ((closes[i] - lows[i]) - (highs[i] - closes[i])) / hl
+            mfv = mfm * volumes[i]
+        if i == 0:
+            result[0] = mfv
+        else:
+            result.append(result[-1] + mfv)
+    return result
+
+
+def stochastic(highs, lows, closes, k_period=14, d_period=3):
+    """stochastic oscillator %k and %d.
+
+    %k = (close - lowest low) / (highest high - lowest low) * 100
+    %d = sma of %k
+    """
+    n = len(closes)
+    k_values = [None] * (k_period - 1)
+    for i in range(k_period - 1, n):
+        low_min = min(lows[i - k_period + 1:i + 1])
+        high_max = max(highs[i - k_period + 1:i + 1])
+        if high_max == low_min:
+            k_values.append(50.0)
+        else:
+            k_values.append(round((closes[i] - low_min) / (high_max - low_min) * 100, 2))
+
+    valid_k = [v for v in k_values if v is not None]
+    d_raw = sma(valid_k, d_period)
+    d_values = [None] * (k_period - 1)
+    d_values.extend(d_raw)
+
+    return k_values, d_values[:n]
+
+
+def williams_r(highs, lows, closes, period=14):
+    """williams %r oscillator.
+
+    similar to stochastic but inverted: -100 to 0 range
+    """
+    n = len(closes)
+    result = [None] * (period - 1)
+    for i in range(period - 1, n):
+        high_max = max(highs[i - period + 1:i + 1])
+        low_min = min(lows[i - period + 1:i + 1])
+        if high_max == low_min:
+            result.append(-50.0)
+        else:
+            result.append(round((high_max - closes[i]) / (high_max - low_min) * -100, 2))
+    return result
+
+
+def cci(highs, lows, closes, period=20):
+    """commodity channel index"""
+    n = len(closes)
+    result = [None] * (period - 1)
+    for i in range(period - 1, n):
+        tp_window = []
+        for j in range(i - period + 1, i + 1):
+            tp_window.append((highs[j] + lows[j] + closes[j]) / 3)
+        mean_tp = sum(tp_window) / len(tp_window)
+        mean_dev = sum(abs(tp - mean_tp) for tp in tp_window) / len(tp_window)
+        tp_current = tp_window[-1]
+        if mean_dev == 0:
+            result.append(0)
+        else:
+            result.append(round((tp_current - mean_tp) / (0.015 * mean_dev), 2))
+    return result
