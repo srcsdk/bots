@@ -11,11 +11,11 @@ usage: python moon.py AMC GME BB
 import sys
 import time
 
-from reta import score_squeeze_potential, fetch_finviz_stats
+from reta import analyze_ticker, score_squeeze_potential, fetch_finviz_stats
 from ohlc import fetch_ohlc
 from hype import (
     scan_subreddit, merge_ticker_data, detect_hype_cycles,
-    compute_hype_score, SUBREDDITS,
+    compute_hype_score, score_sentiment, SUBREDDITS,
 )
 
 
@@ -169,7 +169,7 @@ def analyze_moon(tickers, period="6mo"):
     Returns a list of result dicts sorted by combined score descending.
     """
     print(f"moon analysis: {len(tickers)} tickers")
-    print("scanning social media for hype data...")
+    print(f"scanning social media for hype data...")
     hype_data = gather_hype_data(tickers)
 
     results = []

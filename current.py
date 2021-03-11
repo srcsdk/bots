@@ -3,6 +3,7 @@
 
 import json
 import sys
+import time
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
@@ -23,8 +24,7 @@ def fetch_json(url, timeout=15):
 
 def get_treasury_yields():
     """10yr treasury yield from treasury.gov"""
-    url = ("https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
-           "/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5")
+    url = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5"
     data = fetch_json(url)
     if not data:
         return []
