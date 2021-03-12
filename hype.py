@@ -6,7 +6,7 @@ import json
 import re
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import defaultdict
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
@@ -319,7 +319,7 @@ def print_results(ticker_data, hype_cycles, filter_ticker=None):
         if cycle:
             hype_flag = f"<< {cycle['status']} ({cycle['ratio']:.1f}x)"
         src_count = len(r["sources"])
-        bar = "#" * min(int(r["hype_score"]), 20)
+        bar = "#" * min(int(r["hype_score"]), 20)  # noqa: F841
         print(
             f"  ${r['ticker']:<6} {r['hype_score']:>7.1f} {r['mentions']:>9} "
             f"{sent_str:>18} {src_count:>8}  {hype_flag}"
