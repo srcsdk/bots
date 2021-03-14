@@ -8,16 +8,18 @@ contracts.
 """
 
 import importlib
+import math
 import sys
 from datetime import datetime, timedelta
 
 from ohlc import fetch_ohlc
 from indicators import (
     sma, ema, rsi, macd, bollinger_bands, atr,
-    volume_sma,
+    fifty_two_week_low, fifty_two_week_high, volume_sma, gap_percent,
 )
 from vested import (
-    check_current_match, analyze as vested_analyze,
+    extract_prices, compute_indicators, score_indicators_at,
+    build_pattern, check_current_match, analyze as vested_analyze,
 )
 
 _lambda = importlib.import_module("lambda")
@@ -72,7 +74,7 @@ def score_momentum(ticker, period="1y"):
     macd_line, signal_line, histogram = macd(closes)
     bb_mid, bb_upper, bb_lower = bollinger_bands(closes, 20, 2)
     vol_sma_vals = volume_sma(volumes, 20)
-    atr_vals = atr(highs, lows, closes, 14)  # noqa: F841
+    atr_vals = atr(highs, lows, closes, 14)
 
     idx = len(closes) - 1
     points = 0
@@ -109,7 +111,7 @@ def score_momentum(ticker, period="1y"):
 
     if bb_lower[idx] is not None and bb_upper[idx] is not None:
         max_points += 1
-        bb_width = (bb_upper[idx] - bb_lower[idx]) / bb_mid[idx]  # noqa: F841
+        bb_width = (bb_upper[idx] - bb_lower[idx]) / bb_mid[idx]
         bb_pos = (closes[idx] - bb_lower[idx]) / (bb_upper[idx] - bb_lower[idx])
         if 0.3 < bb_pos < 0.8:
             points += 1
@@ -145,8 +147,9 @@ def score_squeeze(ticker, period="1y"):
     lows = [r["low"] for r in rows]
 
     bb_mid, bb_upper, bb_lower = bollinger_bands(closes, 20, 2)
-    atr_vals = atr(highs, lows, closes, 14)  # noqa: F841
+    atr_vals = atr(highs, lows, closes, 14)
     vol_sma_vals = volume_sma(volumes, 20)
+    kc_period = 20
     kc_mult = 1.5
 
     idx = len(closes) - 1
@@ -386,7 +389,7 @@ def main():
     for result in results:
         print_report(result)
 
-    print("\nranking:")
+    print(f"\nranking:")
     for i, r in enumerate(results, 1):
         c = r["composite"]
         print(f"  {i}. {r['ticker']:<6} {c['signal']:<12} {c['composite']:.3f}"
