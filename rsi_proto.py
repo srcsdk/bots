@@ -5,8 +5,6 @@ testing different smoothing methods to compare accuracy
 against reference implementations.
 """
 
-import sys
-
 
 def rsi_simple(prices, period=14):
     """rsi with simple average smoothing.

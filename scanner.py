@@ -24,6 +24,16 @@ def load_watchlist(filename=None):
     return WATCHLIST_DEFAULT
 
 
+def custom_strategy_list(strategy_names):
+    """validate and filter available strategies for scanning.
+
+    returns list of valid strategy names from the input list.
+    """
+    available = {"gapup", "bcross", "movo", "nobr", "mobr"}
+    valid = [s for s in strategy_names if s in available]
+    return valid
+
+
 def scan_all(tickers, strategy_name, period="1y"):
     """run a strategy across all tickers.
 
