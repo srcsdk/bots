@@ -20,9 +20,5 @@ lint:
 compile:
   stage: test
   script:
-    - pip install matplotlib
-    - |
-      for f in *.py; do
-        echo "compiling $f"
-        python -m py_compile "$f"
-      done
+    - pip install flake8
+    - python -m py_compile *.py

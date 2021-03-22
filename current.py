@@ -3,18 +3,9 @@
 
 import json
 import sys
+import time
 from urllib.request import urlopen, Request
 from urllib.error import URLError
-
-
-def safe_request(url, timeout=10):
-    """wrapper around urllib that catches exceptions and returns None on failure"""
-    req = Request(url, headers={"User-Agent": "market-scanner/1.0"})
-    try:
-        with urlopen(req, timeout=timeout) as resp:
-            return resp.read()
-    except (URLError, OSError, ValueError):
-        return None
 
 
 FRED_BASE = "https://api.stlouisfed.org/fred"
@@ -33,8 +24,7 @@ def fetch_json(url, timeout=15):
 
 def get_treasury_yields():
     """10yr treasury yield from treasury.gov"""
-    url = ("https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
-           "/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5")
+    url = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5"
     data = fetch_json(url)
     if not data:
         return []

@@ -4,12 +4,13 @@
 import argparse
 import sys
 
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import Rectangle
 
 from ohlc import fetch_ohlc
-from indicators import sma, rsi, macd, bollinger_bands, volume_sma
+from indicators import sma, ema, rsi, macd, bollinger_bands, volume_sma
 
 
 STRATEGY_MODULES = {
@@ -20,8 +21,6 @@ STRATEGY_MODULES = {
     "movo": ("movo", "scan_movo"),
     "nobr": ("movo", "scan_nobr"),
     "mobr": ("movo", "scan_mobr"),
-    "meanrev": ("meanrev", "scan"),
-    "ichimoku": ("ichimoku", "scan"),
 }
 
 
@@ -62,12 +61,14 @@ def draw_candlesticks(ax, rows):
 
         ax.plot([i, i], [l, h], color=color, linewidth=0.7)
         rect = Rectangle((i - 0.35, body_bottom), 0.7, body_height,
-                         facecolor=color, edgecolor=color, linewidth=0.5)
+                          facecolor=color, edgecolor=color, linewidth=0.5)
         ax.add_patch(rect)
 
 
 def draw_overlays(ax, closes, dates):
     """draw sma lines and bollinger bands on the price chart"""
+    x = list(range(len(closes)))
+
     sma_20 = sma(closes, 20)
     sma_50 = sma(closes, 50)
     bb_mid, bb_upper, bb_lower = bollinger_bands(closes, 20, 2)
@@ -157,6 +158,7 @@ def draw_signals(ax, rows, signals):
         if date not in date_to_idx:
             continue
         idx = date_to_idx[date]
+        price = sig.get("price", rows[idx]["close"])
         sig_type = sig.get("type", "buy")
 
         if sig_type in ("exit", "sell"):
