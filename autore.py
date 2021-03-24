@@ -10,7 +10,6 @@ trade analysis.
 
 import importlib
 import json
-import math
 import sys
 from datetime import datetime
 
@@ -301,7 +300,7 @@ def run_analysis(ticker, entry_date, exit_date, options_args=None):
     exit_idx = find_date_index(rows, exit_date)
 
     if entry_idx >= exit_idx:
-        print(f"error: entry date must be before exit date", file=sys.stderr)
+        print("error: entry date must be before exit date", file=sys.stderr)
         return None
 
     closes = [r["close"] for r in rows]
@@ -362,7 +361,7 @@ def print_analysis(result):
     print(f"  entry: ${result['entry_price']:.2f}  exit: ${result['exit_price']:.2f}"
           f"  gain: {result['gain_pct']:+.2f}%  days: {result['hold_days']}")
 
-    print(f"\nentry indicators:")
+    print("\nentry indicators:")
     snap = result["entry_snapshot"]
     for key in sorted(snap.keys()):
         if key in ("price", "volume"):
@@ -400,7 +399,7 @@ def print_analysis(result):
         print(f"  entry greeks: d={eg['delta']:.3f} g={eg['gamma']:.4f}"
               f" t={eg['theta']:.4f} v={eg['vega']:.3f}")
         if opt["key_factors"]:
-            print(f"  key factors:")
+            print("  key factors:")
             for f in opt["key_factors"]:
                 print(f"    {f}")
 
