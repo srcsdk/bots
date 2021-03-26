@@ -91,6 +91,23 @@ def scan_multi(subreddits, limit=50):
     return combined
 
 
+def weight_by_subreddit(mentions, weights=None):
+    """apply configurable weights to mentions from different subreddits.
+
+    mentions: dict of {subreddit: Counter of tickers}
+    weights: dict of {subreddit: float weight}, default equal weight
+    returns combined Counter with weighted counts
+    """
+    if weights is None:
+        weights = {}
+    combined = Counter()
+    for sub, ticker_counts in mentions.items():
+        w = weights.get(sub, 1.0)
+        for ticker, count in ticker_counts.items():
+            combined[ticker] += int(count * w)
+    return combined
+
+
 if __name__ == "__main__":
     subs = ["wallstreetbets"]
     limit = 100
