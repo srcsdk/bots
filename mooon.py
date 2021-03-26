@@ -324,7 +324,7 @@ def format_report(result):
 
     candidate = result.get("candidate")
     if candidate:
-        lines.append("[squeeze + hype]")
+        lines.append(f"[squeeze + hype]")
         lines.append(f"  squeeze: {candidate['squeeze_score']}/100  |  "
                      f"hype: {candidate['hype_score']}/100  |  "
                      f"combined: {candidate['combined_score']}/100")
