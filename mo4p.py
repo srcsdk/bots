@@ -433,7 +433,7 @@ def print_macro_report(results):
             for h in ns.get("headlines", [])[:3]:
                 print(f"    [{h['source']}] {h['title'][:80]}")
 
-    print(f"\nmo4p ranking (macro-adjusted):")
+    print("\nmo4p ranking (macro-adjusted):")
     for i, r in enumerate(results, 1):
         m = r["macro"]
         print(f"  {i}. {r['ticker']:<6} {m['adjusted_signal']:<12}"
