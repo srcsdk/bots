@@ -104,6 +104,22 @@ def cloud_signal(closes, cloud):
     return signals
 
 
+def cloud_thickness(senkou_a, senkou_b):
+    """calculate cloud thickness as a volatility signal.
+
+    thicker cloud = stronger support/resistance zone.
+    returns list of thickness values (absolute difference).
+    """
+    n = min(len(senkou_a), len(senkou_b))
+    result = []
+    for i in range(n):
+        if senkou_a[i] is not None and senkou_b[i] is not None:
+            result.append(round(abs(senkou_a[i] - senkou_b[i]), 2))
+        else:
+            result.append(None)
+    return result
+
+
 def scan(ticker, period="1y"):
     """scan ticker for ichimoku signals"""
     rows = fetch_ohlc(ticker, period)
