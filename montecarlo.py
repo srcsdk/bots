@@ -118,6 +118,31 @@ def run_simulation(ticker, period="2y", days=252, n_sims=1000, capital=10000):
     }
 
 
+def tail_risk(simulations, percentile=1):
+    """calculate left-tail risk metrics from simulated paths.
+
+    simulations: list of paths from simulate_paths
+    percentile: worst N% of outcomes to analyze
+    returns dict with tail risk statistics
+    """
+    if not simulations:
+        return {}
+    final_values = sorted(p[-1] for p in simulations)
+    n = len(final_values)
+    cutoff = max(1, int(n * percentile / 100))
+    tail = final_values[:cutoff]
+    initial = simulations[0][0]
+    tail_returns = [(v - initial) / initial * 100 for v in tail]
+    return {
+        "percentile": percentile,
+        "n_tail": cutoff,
+        "worst": round(final_values[0], 2),
+        "tail_mean": round(sum(tail) / len(tail), 2),
+        "tail_mean_return_pct": round(sum(tail_returns) / len(tail_returns), 2),
+        "tail_worst_return_pct": round(min(tail_returns), 2),
+    }
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python montecarlo.py <ticker> [sims] [days]")
