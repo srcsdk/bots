@@ -57,10 +57,13 @@ def scan_nolo(ticker, period="1y"):
         return []
 
     closes = [r["close"] for r in rows]
+    opens = [r["open"] for r in rows]
 
     rsi_vals = rsi(closes, 14)
     macd_line, signal_line, _ = macd(closes)
     low_52 = fifty_two_week_low(closes)
+    gaps = gap_percent(opens, closes)
+
     signals = []
     for i in range(1, len(rows)):
         if rsi_vals[i] is None or macd_line[i] is None:
