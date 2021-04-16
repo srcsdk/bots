@@ -92,6 +92,45 @@ def rank_watchlist(tickers, benchmark="SPY", period="1y"):
     return results
 
 
+def sector_relative(ticker, sector_tickers, period="1y"):
+    """calculate relative strength of ticker vs sector peers.
+
+    returns dict with ticker's rank, percentile, and relative performance
+    """
+    rows = fetch_ohlc(ticker, period)
+    if not rows or len(rows) < 30:
+        return None
+    closes = [r["close"] for r in rows]
+    ticker_ret = (closes[-1] - closes[0]) / closes[0] * 100
+
+    peer_returns = []
+    for peer in sector_tickers:
+        if peer == ticker:
+            continue
+        peer_rows = fetch_ohlc(peer, period)
+        if peer_rows and len(peer_rows) > 30:
+            pc = [r["close"] for r in peer_rows]
+            peer_returns.append((peer, (pc[-1] - pc[0]) / pc[0] * 100))
+
+    if not peer_returns:
+        return {"ticker": ticker, "return_pct": round(ticker_ret, 2),
+                "rank": 1, "total": 1, "percentile": 100.0}
+
+    all_returns = [(ticker, ticker_ret)] + peer_returns
+    all_returns.sort(key=lambda x: x[1], reverse=True)
+    rank = next(i + 1 for i, (t, _) in enumerate(all_returns) if t == ticker)
+    total = len(all_returns)
+    percentile = round((1 - (rank - 1) / total) * 100, 1)
+
+    return {
+        "ticker": ticker,
+        "return_pct": round(ticker_ret, 2),
+        "rank": rank,
+        "total": total,
+        "percentile": percentile,
+    }
+
+
 if __name__ == "__main__":
     from scanner import WATCHLIST_DEFAULT
 
