@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """reta: short squeeze detection and alerts"""
 
+import json
+import re
 import sys
 from html.parser import HTMLParser
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
 from ohlc import fetch_ohlc
-from indicators import rsi, macd, bollinger_bands, volume_sma
+from indicators import (
+    sma, ema, rsi, macd, bollinger_bands, volume_sma, atr
+)
 
 
 class FinvizParser(HTMLParser):
@@ -149,6 +153,8 @@ def score_squeeze_potential(ticker, rows, finviz_data):
     """
     closes = [r["close"] for r in rows]
     volumes = [r["volume"] for r in rows]
+    highs = [r["high"] for r in rows]
+    lows = [r["low"] for r in rows]
 
     score = 0
     breakdown = {}
@@ -272,6 +278,7 @@ def find_exit_signals(rows):
     price making new highs while rsi/macd diverge downward.
     """
     closes = [r["close"] for r in rows]
+    highs = [r["high"] for r in rows]
 
     rsi_vals = rsi(closes, 14)
     macd_line, signal_line, hist = macd(closes)
@@ -322,13 +329,13 @@ def analyze_ticker(ticker, period="6mo"):
     print(f"  data: {rows[0]['date']} to {rows[-1]['date']} ({len(rows)} bars)")
     print(f"  last close: ${rows[-1]['close']:.2f}")
 
-    print("  fetching short interest data...")
+    print(f"  fetching short interest data...")
     finviz_data = fetch_finviz_stats(ticker)
 
     total_score, breakdown = score_squeeze_potential(ticker, rows, finviz_data)
 
     print(f"\n  squeeze score: {total_score}/100")
-    print("  breakdown:")
+    print(f"  breakdown:")
     for factor, (val, pts) in breakdown.items():
         if val is not None:
             print(f"    {factor:<20} value={val:<10} pts={pts}")
@@ -346,7 +353,7 @@ def analyze_ticker(ticker, period="6mo"):
                   f"vol={s['vol_ratio']}x rsi={s['rsi']:.1f} "
                   f"hist={s['macd_hist']:.4f}")
     else:
-        print("\n  no entry signals found")
+        print(f"\n  no entry signals found")
 
     if exits:
         recent_exits = exits[-5:]
@@ -356,7 +363,7 @@ def analyze_ticker(ticker, period="6mo"):
                   f"rsi={s['rsi']:.1f} hist={s['macd_hist']:.4f} "
                   f"[{s['divergence']}]")
     else:
-        print("\n  no exit signals found")
+        print(f"\n  no exit signals found")
 
     verdict = "neutral"
     if total_score >= 70:
@@ -402,7 +409,7 @@ if __name__ == "__main__":
 
     if len(results) > 1:
         print(f"\n{'=' * 50}")
-        print("  summary (ranked by squeeze score)")
+        print(f"  summary (ranked by squeeze score)")
         print(f"{'=' * 50}")
         results.sort(key=lambda r: r["score"], reverse=True)
         for r in results:
