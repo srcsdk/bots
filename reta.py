@@ -308,6 +308,32 @@ def find_exit_signals(rows):
     return signals
 
 
+def float_turnover(ticker, period="6mo"):
+    """estimate float turnover ratio from volume vs estimated float.
+
+    uses avg daily volume * trading days / market cap proxy as a rough
+    estimate of how many times the float has turned over.
+    """
+    rows = fetch_ohlc(ticker, period)
+    if not rows or len(rows) < 20:
+        return None
+    volumes = [r["volume"] for r in rows]
+    closes = [r["close"] for r in rows]
+    avg_vol = sum(volumes) / len(volumes)
+    total_volume = sum(volumes)
+    market_cap_proxy = closes[-1] * avg_vol * 20
+    if market_cap_proxy <= 0:
+        return None
+    turnover = total_volume / market_cap_proxy
+    return {
+        "ticker": ticker,
+        "avg_daily_volume": round(avg_vol, 0),
+        "total_volume": total_volume,
+        "trading_days": len(rows),
+        "turnover_ratio": round(turnover, 4),
+    }
+
+
 def analyze_ticker(ticker, period="6mo"):
     """full squeeze analysis for a single ticker"""
     print(f"\n{'=' * 50}")
