@@ -6,7 +6,7 @@ import json
 import sys
 import time
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
@@ -43,18 +43,18 @@ def fetch_ohlc(ticker, period="1y", interval="1d"):
     for i, ts in enumerate(timestamps):
         o = quote.get("open", [None])[i]
         h = quote.get("high", [None])[i]
-        low = quote.get("low", [None])[i]
+        l = quote.get("low", [None])[i]
         c = quote.get("close", [None])[i]
         v = quote.get("volume", [None])[i]
 
-        if None in (o, h, low, c):
+        if None in (o, h, l, c):
             continue
 
         rows.append({
             "date": datetime.fromtimestamp(ts).strftime("%Y-%m-%d"),
             "open": round(o, 2),
             "high": round(h, 2),
-            "low": round(low, 2),
+            "low": round(l, 2),
             "close": round(c, 2),
             "volume": v or 0,
         })
