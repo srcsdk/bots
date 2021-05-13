@@ -125,12 +125,12 @@ if __name__ == "__main__":
 
     correlated = find_pairs(matrix, valid, 0.7)
     if correlated:
-        print(f"\nhighly correlated pairs (>0.7):")
+        print("\nhighly correlated pairs (>0.7):")
         for t1, t2, corr in correlated:
             print(f"  {t1}-{t2}: {corr:+.3f}")
 
     diverse = find_uncorrelated(matrix, valid, 0.3)
     if diverse:
-        print(f"\nuncorrelated pairs (<0.3, good for diversification):")
+        print("\nuncorrelated pairs (<0.3, good for diversification):")
         for t1, t2, corr in diverse[:5]:
             print(f"  {t1}-{t2}: {corr:+.3f}")

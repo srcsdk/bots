@@ -121,6 +121,36 @@ def rank_strategies(tickers, period="2y"):
     return ranked
 
 
+def correlation_matrix(tickers, period="1y"):
+    """build a correlation matrix from price returns of multiple tickers.
+
+    returns (matrix, valid_tickers) where matrix[i][j] is pearson
+    correlation between tickers i and j
+    """
+    from correlation import daily_returns, pearson_correlation
+    from ohlc import fetch_ohlc
+
+    returns_data = {}
+    valid = []
+    for ticker in tickers:
+        rows = fetch_ohlc(ticker, period)
+        if rows and len(rows) > 30:
+            closes = [r["close"] for r in rows]
+            returns_data[ticker] = daily_returns(closes)
+            valid.append(ticker)
+
+    n = len(valid)
+    matrix = [[0.0] * n for _ in range(n)]
+    for i in range(n):
+        matrix[i][i] = 1.0
+        for j in range(i + 1, n):
+            corr = pearson_correlation(returns_data[valid[i]], returns_data[valid[j]])
+            matrix[i][j] = corr
+            matrix[j][i] = corr
+
+    return matrix, valid
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage:")
