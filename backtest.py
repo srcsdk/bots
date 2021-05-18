@@ -94,6 +94,39 @@ def run_backtest(ticker, scan_fn, period="2y", capital=10000,
     return trades, equity_curve, stats
 
 
+def sharpe_overlay(results):
+    """add rolling sharpe ratio to backtest results.
+
+    results: (trades, equity_curve, stats) tuple from run_backtest
+    returns the stats dict with rolling_sharpe list appended
+    """
+    trades, equity_curve, stats = results
+    if len(equity_curve) < 3:
+        stats["rolling_sharpe"] = []
+        return stats
+
+    values = [e[1] for e in equity_curve]
+    returns = []
+    for i in range(1, len(values)):
+        if values[i - 1] > 0:
+            returns.append((values[i] - values[i - 1]) / values[i - 1])
+
+    window = min(20, len(returns))
+    rolling = []
+    for i in range(window - 1, len(returns)):
+        chunk = returns[i - window + 1:i + 1]
+        mean_r = sum(chunk) / len(chunk)
+        var_r = sum((r - mean_r) ** 2 for r in chunk) / len(chunk)
+        std_r = var_r ** 0.5
+        if std_r > 0:
+            rolling.append(round(mean_r / std_r * (252 ** 0.5), 4))
+        else:
+            rolling.append(0)
+
+    stats["rolling_sharpe"] = rolling
+    return stats
+
+
 def save_journal(trades, filename):
     """save trade journal to json"""
     with open(filename, "w") as f:
