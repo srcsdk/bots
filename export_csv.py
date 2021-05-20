@@ -4,7 +4,6 @@
 import csv
 import os
 import sys
-from datetime import datetime
 
 
 def export_to_csv(rows, filename, include_header=True):
