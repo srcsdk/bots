@@ -1,8 +1,8 @@
 # bots
 
-trading bot strategies, technical analysis, and portfolio risk tools. fetches
-ohlc data from yahoo finance, computes indicators, and scans for buy/sell
-signals using various strategies.
+trading bot strategies and technical analysis tools. fetches ohlc data from
+yahoo finance, computes indicators, and scans for buy/sell signals using
+various strategies.
 
 ## install
 
@@ -27,8 +27,6 @@ requires python 3.7+ and matplotlib.
 - **movo** -- momentum + volume: price breaking above sma with volume surge
 - **nobr** -- nolo + rsi < 45
 - **mobr** -- nobr + movo combined, both must trigger within 3 days
-- **meanrev** -- mean reversion with z-score and bollinger band entries
-- **ichimoku** -- ichimoku cloud tenkan/kijun crossover signals
 - **reta** -- short squeeze detection and scoring
 - **vested** -- reverse engineer indicators that flagged bottoms in past winners
 - **lambda** -- options strategy based on black-scholes greeks
@@ -45,49 +43,32 @@ fetch ohlc data:
 run a strategy scan:
 
     python gapup.py AAPL
+    python bcross.py TSLA 6mo
     python movo.py MSFT --mobr
-    python meanrev.py TSLA
-    python ichimoku.py NVDA
 
 chart with strategy overlay:
 
     python gui.py AAPL --strategy movo --period 6mo
 
-scan multiple tickers:
+short squeeze analysis:
 
-    python scanner.py gapup
-    python scanner.py --all
+    python reta.py AMC GME BB
 
-backtest a strategy:
+options analysis:
 
-    python backtest.py AAPL gapup
-    python compare.py ticker AAPL
-    python compare.py rank
+    python lambda.py AAPL call 150 2025-04-16
 
-portfolio and risk:
+social sentiment:
 
-    python portfolio.py size 10000 150 142
-    python var.py AAPL MSFT GOOGL
-    python montecarlo.py TSLA 1000 252
-    python kelly.py 0.55 3.5 2.0
+    python hype.py --ticker AAPL
+    python wsb.py --multi
 
-analysis tools:
+reverse engineer past bottoms:
 
-    python correlation.py AAPL MSFT GOOGL AMZN
-    python pairs.py AAPL MSFT
-    python multiframe.py NVDA
-    python fibonacci.py AAPL
-    python strength.py AAPL MSFT GOOGL
-
-alerts and watchlist:
-
-    python alerts.py add AAPL rsi 30 below
-    python alerts.py check
-    python watchlist.py add TSLA
-    python watchlist.py scan
+    python vested.py AAPL
+    python vested.py --scan AAPL MSFT TSLA
 
 ## indicators
 
-all indicators in indicators.py: sma, ema, rsi, macd, bollinger bands,
-atr, 52-week high/low, volume sma, gap percent, vwap, obv,
-accumulation/distribution, stochastic, williams %r, cci.
+all indicators are in indicators.py: sma, ema, rsi, macd, bollinger bands,
+atr, 52-week high/low, volume sma, gap percent.
