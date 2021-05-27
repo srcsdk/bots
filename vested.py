@@ -133,7 +133,7 @@ def score_indicators_at(idx, closes, opens, highs, lows, volumes):
             and ind["macd_line"][idx - 1] is not None
             and ind["macd_signal"][idx - 1] is not None):
         crossed = (ind["macd_line"][idx] > ind["macd_signal"][idx]
-                   and ind["macd_line"][idx - 1] <= ind["macd_signal"][idx - 1])
+                    and ind["macd_line"][idx - 1] <= ind["macd_signal"][idx - 1])
         scores["macd_cross_up"] = 1.0 if crossed else 0
 
     if ind["vol_sma"][idx] is not None and ind["vol_sma"][idx] > 0:
@@ -266,7 +266,7 @@ def print_analysis(result):
         print(f"  {name:<20s} {score:.2f} {bar}{marker}")
 
     print(f"\ntotal score: {result['total_score']:.2f}")
-    print("pattern (* = score >= 0.3):")
+    print(f"pattern (* = score >= 0.3):")
     for name, score in sorted(result["pattern"].items(), key=lambda x: -x[1]):
         print(f"  {name}: {score:.2f}")
 
