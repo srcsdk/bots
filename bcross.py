@@ -52,6 +52,23 @@ def scan(ticker, period="1y"):
     return signals
 
 
+def scan_multi_period(ticker, periods=None):
+    """run scan across multiple periods and return combined signals with period context"""
+    if periods is None:
+        periods = ["3mo", "6mo", "1y", "2y"]
+    combined = []
+    seen_dates = set()
+    for p in periods:
+        signals = scan(ticker, p)
+        for sig in signals:
+            if sig["date"] not in seen_dates:
+                sig["period"] = p
+                combined.append(sig)
+                seen_dates.add(sig["date"])
+    combined.sort(key=lambda s: s["date"])
+    return combined
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python bcross.py <ticker> [period]")
