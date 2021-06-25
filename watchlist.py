@@ -63,6 +63,26 @@ def get_active_tickers():
     return data["lists"].get(active, [])
 
 
+def auto_refresh(watchlist, interval=300):
+    """return a refresh schedule dict with last_updated timestamps.
+
+    sets up a schedule for periodic watchlist data refresh.
+    interval is in seconds (default 5 minutes).
+    """
+    import time
+    now = time.time()
+    tickers = watchlist.get("lists", {}).get(
+        watchlist.get("active", "default"), []
+    )
+    schedule = {
+        "interval": interval,
+        "last_updated": now,
+        "next_update": now + interval,
+        "tickers": {t: {"last_updated": None} for t in tickers},
+    }
+    return schedule
+
+
 def quick_snapshot(tickers):
     """get a quick snapshot of current indicators for tickers"""
     results = []
