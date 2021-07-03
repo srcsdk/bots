@@ -49,6 +49,19 @@ def extension_levels(swing_high, swing_low, direction="up"):
     return levels
 
 
+def extension_targets(swing_low, swing_high):
+    """calculate fibonacci extension levels from a swing.
+
+    returns dict of extension ratios to price levels:
+    1.272, 1.618, 2.0, 2.618
+    """
+    diff = swing_high - swing_low
+    targets = {}
+    for ratio in [1.272, 1.618, 2.0, 2.618]:
+        targets[f"{ratio:.3f}"] = round(swing_low + diff * ratio, 2)
+    return targets
+
+
 def auto_fib(ticker, period="6mo"):
     """automatically find swing points and calculate fib levels.
 
