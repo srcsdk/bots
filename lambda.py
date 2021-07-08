@@ -205,6 +205,7 @@ def evaluate_option(spot, strike, rate, vol, t, option_type, technicals):
     delta = greeks["delta"]
     theta = greeks["theta"]
     vega = greeks["vega"]
+    gamma = greeks["gamma"]
 
     scores = []
     reasons = []
@@ -356,7 +357,7 @@ def format_report(result):
 
     ev = result["evaluation"]
     greeks = ev.get("greeks", {})
-    lines.append("\ngreeks:")
+    lines.append(f"\ngreeks:")
     lines.append(f"  price:  {greeks.get('price', 0):.4f}")
     lines.append(f"  delta:  {greeks.get('delta', 0):.4f}")
     lines.append(f"  gamma:  {greeks.get('gamma', 0):.4f}")
@@ -370,7 +371,7 @@ def format_report(result):
     signal_display = signal.upper()
     lines.append(f"\nsignal:          {signal_display} (score: {score}/{max_score})")
 
-    lines.append("\nanalysis:")
+    lines.append(f"\nanalysis:")
     for reason in ev.get("reasons", []):
         lines.append(f"  - {reason}")
 
