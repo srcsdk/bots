@@ -6,7 +6,7 @@ import json
 import sys
 import time
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
@@ -43,18 +43,18 @@ def fetch_ohlc(ticker, period="1y", interval="1d"):
     for i, ts in enumerate(timestamps):
         o = quote.get("open", [None])[i]
         h = quote.get("high", [None])[i]
-        l = quote.get("low", [None])[i]
+        low = quote.get("low", [None])[i]
         c = quote.get("close", [None])[i]
         v = quote.get("volume", [None])[i]
 
-        if None in (o, h, l, c):
+        if None in (o, h, low, c):
             continue
 
         rows.append({
             "date": datetime.fromtimestamp(ts).strftime("%Y-%m-%d"),
             "open": round(o, 2),
             "high": round(h, 2),
-            "low": round(l, 2),
+            "low": round(low, 2),
             "close": round(c, 2),
             "volume": v or 0,
         })
@@ -102,6 +102,36 @@ if __name__ == "__main__":
               f"{r['low']:>8.2f} {r['close']:>8.2f} {r['volume']:>12,}")
 
     print(f"\n{len(rows)} rows ({rows[0]['date']} to {rows[-1]['date']})")
+
+
+_fetch_cache = {}
+
+
+def cached_fetch(ticker, period, ttl=3600):
+    """fetch ohlc data with in-memory cache and ttl expiry.
+
+    caches results keyed by ticker+period, expires after ttl seconds.
+    """
+    key = f"{ticker}_{period}"
+    now = time.time()
+    if key in _fetch_cache:
+        cached_time, cached_data = _fetch_cache[key]
+        if now - cached_time < ttl:
+            return cached_data
+    rows = fetch_ohlc(ticker, period)
+    if rows:
+        _fetch_cache[key] = (now, rows)
+    return rows
+
+
+def fetch_intraday(ticker, interval="5m"):
+    """fetch intraday ohlc data.
+
+    placeholder for future intraday data implementation.
+    currently returns empty list.
+    """
+    # todo: implement intraday data fetching
+    return []
 
 
 def cache_path(ticker, period, interval):

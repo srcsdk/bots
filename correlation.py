@@ -88,6 +88,41 @@ def find_uncorrelated(matrix, tickers, threshold=0.3):
     return pairs
 
 
+def rolling_correlation_regime(series_a, series_b, window=60):
+    """detect correlation regime changes between two return series.
+
+    computes rolling correlation and flags regime shifts where
+    correlation moves significantly from its recent average.
+    returns list of (index, correlation, regime) tuples
+    """
+    n = min(len(series_a), len(series_b))
+    if n < window:
+        return []
+    a = series_a[:n]
+    b = series_b[:n]
+    results = []
+    rolling_corrs = []
+    for i in range(window - 1, n):
+        chunk_a = a[i - window + 1:i + 1]
+        chunk_b = b[i - window + 1:i + 1]
+        corr = pearson_correlation(chunk_a, chunk_b)
+        rolling_corrs.append(corr)
+
+        if len(rolling_corrs) >= 10:
+            recent_avg = sum(rolling_corrs[-10:]) / 10
+            if corr > recent_avg + 0.2:
+                regime = "converging"
+            elif corr < recent_avg - 0.2:
+                regime = "diverging"
+            else:
+                regime = "stable"
+        else:
+            regime = "stable"
+
+        results.append((i, corr, regime))
+    return results
+
+
 def format_matrix(matrix, tickers):
     """format correlation matrix as aligned text"""
     col_width = 8
@@ -125,12 +160,12 @@ if __name__ == "__main__":
 
     correlated = find_pairs(matrix, valid, 0.7)
     if correlated:
-        print(f"\nhighly correlated pairs (>0.7):")
+        print("\nhighly correlated pairs (>0.7):")
         for t1, t2, corr in correlated:
             print(f"  {t1}-{t2}: {corr:+.3f}")
 
     diverse = find_uncorrelated(matrix, valid, 0.3)
     if diverse:
-        print(f"\nuncorrelated pairs (<0.3, good for diversification):")
+        print("\nuncorrelated pairs (<0.3, good for diversification):")
         for t1, t2, corr in diverse[:5]:
             print(f"  {t1}-{t2}: {corr:+.3f}")
