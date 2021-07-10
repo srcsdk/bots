@@ -21,6 +21,25 @@ def zscore_deviation(closes, period=20):
     return result
 
 
+def configurable_decay(signals, decay_rate=0.95):
+    """apply time decay to signal strength.
+
+    older signals fade by decay_rate per period.
+    returns list of signals with added 'strength' field.
+    """
+    if not signals:
+        return signals
+    n = len(signals)
+    result = []
+    for i, sig in enumerate(signals):
+        age = n - 1 - i
+        strength = round(decay_rate ** age, 4)
+        entry = dict(sig)
+        entry["strength"] = strength
+        result.append(entry)
+    return result
+
+
 def scan(ticker, period="1y", rsi_low=25, rsi_high=75, bb_threshold=0.02):
     """scan for mean reversion entries.
 
