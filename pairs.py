@@ -36,28 +36,6 @@ def zscore(values, lookback=20):
     return result
 
 
-def zscore_normalization(spread, window=20):
-    """calculate rolling z-score of the spread series.
-
-    normalizes spread values relative to a rolling window
-    for comparable signal strength across different pairs.
-    """
-    result = [None] * min(window - 1, len(spread))
-    for i in range(window - 1, len(spread)):
-        w = [v for v in spread[i - window + 1:i + 1] if v is not None]
-        if len(w) < 2:
-            result.append(None)
-            continue
-        mean = sum(w) / len(w)
-        variance = sum((x - mean) ** 2 for x in w) / len(w)
-        std = variance ** 0.5
-        if std == 0:
-            result.append(0.0)
-        else:
-            result.append(round((spread[i] - mean) / std, 4))
-    return result
-
-
 def find_entry_signals(z_scores, dates, threshold=2.0):
     """find pair trade entry signals from z-score crossings.
 
