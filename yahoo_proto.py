@@ -43,7 +43,7 @@ def test_yahoo_api(ticker):
 
     if timestamps:
         print(f"\nfields available: {list(quote.keys())}")
-        print(f"\nlast 5 days:")
+        print("\nlast 5 days:")
         for i in range(-5, 0):
             if abs(i) <= len(timestamps):
                 idx = len(timestamps) + i
@@ -56,6 +56,41 @@ def test_yahoo_api(ticker):
                     print(f"  {date}  o={o:.2f}  c={c:.2f}  v={v:,}")
 
     return data
+
+
+def validate_response(data):
+    """check yahoo api response has expected fields.
+
+    returns dict with valid flag and list of missing fields.
+    """
+    if not data or not isinstance(data, dict):
+        return {"valid": False, "missing": ["root"]}
+
+    missing = []
+    chart = data.get("chart")
+    if chart is None:
+        missing.append("chart")
+        return {"valid": False, "missing": missing}
+
+    result = chart.get("result")
+    if not result or not isinstance(result, list) or len(result) == 0:
+        missing.append("chart.result")
+        return {"valid": False, "missing": missing}
+
+    entry = result[0]
+    if "timestamp" not in entry:
+        missing.append("timestamp")
+    indicators = entry.get("indicators", {})
+    quote = indicators.get("quote", [])
+    if not quote:
+        missing.append("indicators.quote")
+    else:
+        q = quote[0]
+        for field in ["open", "high", "low", "close", "volume"]:
+            if field not in q:
+                missing.append(f"quote.{field}")
+
+    return {"valid": len(missing) == 0, "missing": missing}
 
 
 if __name__ == "__main__":

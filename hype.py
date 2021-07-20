@@ -6,7 +6,7 @@ import json
 import re
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import defaultdict
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
@@ -319,7 +319,7 @@ def print_results(ticker_data, hype_cycles, filter_ticker=None):
         if cycle:
             hype_flag = f"<< {cycle['status']} ({cycle['ratio']:.1f}x)"
         src_count = len(r["sources"])
-        bar = "#" * min(int(r["hype_score"]), 20)
+        bar = "#" * min(int(r["hype_score"]), 20)  # noqa: F841
         print(
             f"  ${r['ticker']:<6} {r['hype_score']:>7.1f} {r['mentions']:>9} "
             f"{sent_str:>18} {src_count:>8}  {hype_flag}"
@@ -339,6 +339,28 @@ def print_results(ticker_data, hype_cycles, filter_ticker=None):
             )
         else:
             print("  hype cycle: none detected")
+
+
+def correlate_trends(social_signals, price_data):
+    """calculate correlation between social mention frequency and price movement.
+
+    social_signals: list of mention counts per period
+    price_data: list of price changes per period (same length)
+    returns pearson correlation coefficient
+    """
+    n = min(len(social_signals), len(price_data))
+    if n < 3:
+        return 0.0
+    ss = social_signals[:n]
+    pp = price_data[:n]
+    mean_s = sum(ss) / n
+    mean_p = sum(pp) / n
+    cov = sum((ss[i] - mean_s) * (pp[i] - mean_p) for i in range(n)) / n
+    std_s = (sum((s - mean_s) ** 2 for s in ss) / n) ** 0.5
+    std_p = (sum((p - mean_p) ** 2 for p in pp) / n) ** 0.5
+    if std_s == 0 or std_p == 0:
+        return 0.0
+    return round(cov / (std_s * std_p), 4)
 
 
 def parse_args():
