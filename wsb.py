@@ -108,6 +108,35 @@ def weight_by_subreddit(mentions, weights=None):
     return combined
 
 
+def sentiment_score_text(text):
+    """score text for bullish/bearish sentiment using word matching.
+
+    returns dict with bullish count, bearish count, and net score (-1 to 1)
+    """
+    bullish_words = {
+        "buy", "calls", "moon", "rocket", "bull", "long", "squeeze",
+        "breakout", "undervalued", "dip", "tendies", "gains", "upside",
+        "bullish", "rip", "pump", "green", "rally",
+    }
+    bearish_words = {
+        "sell", "puts", "crash", "bear", "short", "dump", "overvalued",
+        "drop", "tank", "red", "bearish", "fade", "drill", "bag",
+        "loss", "losses", "down", "falling",
+    }
+    words = text.lower().split()
+    bull_count = sum(1 for w in words if w in bullish_words)
+    bear_count = sum(1 for w in words if w in bearish_words)
+    total = bull_count + bear_count
+    if total == 0:
+        return {"bullish": 0, "bearish": 0, "score": 0.0}
+    score = (bull_count - bear_count) / total
+    return {
+        "bullish": bull_count,
+        "bearish": bear_count,
+        "score": round(score, 4),
+    }
+
+
 if __name__ == "__main__":
     subs = ["wallstreetbets"]
     limit = 100

@@ -103,6 +103,29 @@ def get_fear_greed():
         return None
 
 
+def parse_fred_series(series_id, api_key=None):
+    """parse FRED economic data series into list of (date, value) tuples.
+
+    series_id: FRED series identifier (e.g. 'GDP', 'UNRATE', 'DFF')
+    api_key: optional FRED API key
+    returns list of dicts with date and value keys
+    """
+    key = api_key or "DEMO_KEY"
+    url = (f"{FRED_BASE}/series/observations"
+           f"?series_id={series_id}&api_key={key}&file_type=json")
+    data = fetch_json(url)
+    if not data or "observations" not in data:
+        return []
+    results = []
+    for obs in data["observations"]:
+        try:
+            val = float(obs["value"])
+            results.append({"date": obs["date"], "value": val})
+        except (ValueError, KeyError):
+            continue
+    return results
+
+
 if __name__ == "__main__":
     print("market data feed\n")
 
