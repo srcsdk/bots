@@ -3,18 +3,9 @@
 
 import json
 import sys
+import time
 from urllib.request import urlopen, Request
 from urllib.error import URLError
-
-
-def safe_request(url, timeout=10):
-    """wrapper around urllib that catches exceptions and returns None on failure"""
-    req = Request(url, headers={"User-Agent": "market-scanner/1.0"})
-    try:
-        with urlopen(req, timeout=timeout) as resp:
-            return resp.read()
-    except (URLError, OSError, ValueError):
-        return None
 
 
 FRED_BASE = "https://api.stlouisfed.org/fred"
@@ -33,8 +24,7 @@ def fetch_json(url, timeout=15):
 
 def get_treasury_yields():
     """10yr treasury yield from treasury.gov"""
-    url = ("https://api.fiscaldata.treasury.gov/services/api/fiscal_service"
-           "/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5")
+    url = "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=5"
     data = fetch_json(url)
     if not data:
         return []
@@ -101,29 +91,6 @@ def get_fear_greed():
         return {"vix": round(vix, 2), "sentiment": sentiment}
     except (URLError, json.JSONDecodeError, KeyError):
         return None
-
-
-def parse_fred_series(series_id, api_key=None):
-    """parse FRED economic data series into list of (date, value) tuples.
-
-    series_id: FRED series identifier (e.g. 'GDP', 'UNRATE', 'DFF')
-    api_key: optional FRED API key
-    returns list of dicts with date and value keys
-    """
-    key = api_key or "DEMO_KEY"
-    url = (f"{FRED_BASE}/series/observations"
-           f"?series_id={series_id}&api_key={key}&file_type=json")
-    data = fetch_json(url)
-    if not data or "observations" not in data:
-        return []
-    results = []
-    for obs in data["observations"]:
-        try:
-            val = float(obs["value"])
-            results.append({"date": obs["date"], "value": val})
-        except (ValueError, KeyError):
-            continue
-    return results
 
 
 if __name__ == "__main__":
