@@ -10,7 +10,6 @@ trade analysis.
 
 import importlib
 import json
-import math
 import sys
 from datetime import datetime
 
@@ -274,6 +273,55 @@ def analyze_options_trade(ticker, entry_date, exit_date, option_type,
     }
 
 
+def cluster_patterns(patterns, n_clusters=3):
+    """group similar indicator fingerprints using simple distance metric.
+
+    patterns: list of fingerprint dicts from build_fingerprint
+    n_clusters: number of groups to create
+    returns list of cluster assignments (0 to n_clusters-1) for each pattern
+    """
+    if not patterns or n_clusters <= 0:
+        return []
+    all_keys = set()
+    for p in patterns:
+        all_keys.update(p.keys())
+    all_keys = sorted(all_keys)
+
+    vectors = []
+    for p in patterns:
+        vec = [p.get(k, 0) for k in all_keys]
+        vectors.append(vec)
+
+    n = len(vectors)
+    if n <= n_clusters:
+        return list(range(n))
+
+    step = n // n_clusters
+    centroids = [vectors[i * step] for i in range(n_clusters)]
+    assignments = [0] * n
+
+    for _ in range(10):
+        for i, vec in enumerate(vectors):
+            best_dist = float("inf")
+            best_c = 0
+            for c, cent in enumerate(centroids):
+                dist = sum((vec[d] - cent[d]) ** 2 for d in range(len(all_keys)))
+                if dist < best_dist:
+                    best_dist = dist
+                    best_c = c
+            assignments[i] = best_c
+
+        for c in range(n_clusters):
+            members = [vectors[i] for i in range(n) if assignments[i] == c]
+            if members:
+                centroids[c] = [
+                    sum(m[d] for m in members) / len(members)
+                    for d in range(len(all_keys))
+                ]
+
+    return assignments
+
+
 def run_analysis(ticker, entry_date, exit_date, options_args=None):
     """run full reverse engineering analysis on a trade.
 
@@ -301,7 +349,7 @@ def run_analysis(ticker, entry_date, exit_date, options_args=None):
     exit_idx = find_date_index(rows, exit_date)
 
     if entry_idx >= exit_idx:
-        print(f"error: entry date must be before exit date", file=sys.stderr)
+        print("error: entry date must be before exit date", file=sys.stderr)
         return None
 
     closes = [r["close"] for r in rows]
@@ -362,7 +410,7 @@ def print_analysis(result):
     print(f"  entry: ${result['entry_price']:.2f}  exit: ${result['exit_price']:.2f}"
           f"  gain: {result['gain_pct']:+.2f}%  days: {result['hold_days']}")
 
-    print(f"\nentry indicators:")
+    print("\nentry indicators:")
     snap = result["entry_snapshot"]
     for key in sorted(snap.keys()):
         if key in ("price", "volume"):
@@ -400,7 +448,7 @@ def print_analysis(result):
         print(f"  entry greeks: d={eg['delta']:.3f} g={eg['gamma']:.4f}"
               f" t={eg['theta']:.4f} v={eg['vega']:.3f}")
         if opt["key_factors"]:
-            print(f"  key factors:")
+            print("  key factors:")
             for f in opt["key_factors"]:
                 print(f"    {f}")
 

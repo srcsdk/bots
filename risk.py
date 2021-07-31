@@ -3,7 +3,6 @@
 
 import sys
 from ohlc import fetch_ohlc
-from indicators import atr
 
 
 def fixed_stop(entry, stop_pct=0.05):
@@ -64,8 +63,6 @@ def simulate_exit(rows, entry_idx, stop, target, max_hold=30):
     for i in range(entry_idx + 1, min(len(rows), entry_idx + max_hold + 1)):
         low = rows[i]["low"]
         high = rows[i]["high"]
-        close = rows[i]["close"]
-
         if low <= stop:
             return i, stop, "stop_loss"
         if high >= target:
@@ -120,6 +117,24 @@ def backtest_with_risk(ticker, signals, stop_pct=0.05, target_pct=0.10,
         })
 
     return trades
+
+
+def max_consecutive_losses(trades):
+    """count the longest streak of losing trades.
+
+    a losing trade has pnl_pct <= 0.
+    """
+    if not trades:
+        return 0
+    max_streak = 0
+    current = 0
+    for t in trades:
+        if t.get("pnl_pct", 0) <= 0:
+            current += 1
+            max_streak = max(max_streak, current)
+        else:
+            current = 0
+    return max_streak
 
 
 def summarize_trades(trades):
