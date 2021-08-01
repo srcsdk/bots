@@ -373,3 +373,52 @@ def cci(highs, lows, closes, period=20):
         else:
             result.append(round((tp_current - mean_tp) / (0.015 * mean_dev), 2))
     return result
+
+
+def rate_of_change(closes, period=12):
+    """calculate rate of change (ROC) indicator.
+
+    roc = (close - close_n_periods_ago) / close_n_periods_ago * 100
+    """
+    n = len(closes)
+    result = [None] * n
+    for i in range(period, n):
+        if closes[i - period] != 0:
+            result[i] = round((closes[i] - closes[i - period]) / closes[i - period] * 100, 2)
+    return result
+
+
+def keltner_channel(highs, lows, closes, period=20, mult=1.5):
+    """calculate keltner channels using EMA and ATR.
+
+    returns (upper, middle, lower) lists
+    """
+    n = len(closes)
+    if n < period:
+        return [None] * n, [None] * n, [None] * n
+    ema = [None] * n
+    ema[period - 1] = sum(closes[:period]) / period
+    k = 2 / (period + 1)
+    for i in range(period, n):
+        ema[i] = closes[i] * k + ema[i - 1] * (1 - k)
+    atr_vals = [None] * n
+    for i in range(1, n):
+        tr = max(highs[i] - lows[i],
+                 abs(highs[i] - closes[i - 1]),
+                 abs(lows[i] - closes[i - 1]))
+        if i == period:
+            trs = [max(highs[j] - lows[j],
+                       abs(highs[j] - closes[j - 1]),
+                       abs(lows[j] - closes[j - 1]))
+                   for j in range(1, period + 1)]
+            atr_vals[i] = sum(trs) / len(trs)
+        elif i > period and atr_vals[i - 1] is not None:
+            atr_vals[i] = (atr_vals[i - 1] * (period - 1) + tr) / period
+    upper = [None] * n
+    lower = [None] * n
+    for i in range(n):
+        if ema[i] is not None and atr_vals[i] is not None:
+            upper[i] = round(ema[i] + mult * atr_vals[i], 2)
+            lower[i] = round(ema[i] - mult * atr_vals[i], 2)
+            ema[i] = round(ema[i], 2)
+    return upper, ema, lower

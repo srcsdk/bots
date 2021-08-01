@@ -152,6 +152,35 @@ def scan(ticker, period="1y", entry_period=20, exit_period=10, max_units=4):
     return {"ticker": ticker, "signals": signals, "current": current}
 
 
+def pyramid_check(position, units, max_units=4):
+    """check if pyramiding (adding to position) is allowed.
+
+    position: dict with 'entry' and 'current' price
+    units: current number of units held
+    max_units: maximum pyramid units
+    returns dict with allowed status and suggested entry
+    """
+    if units >= max_units:
+        return {"allowed": False, "reason": "max units reached", "units": units}
+    entry = position.get("entry", 0)
+    current = position.get("current", 0)
+    atr = position.get("atr", 0)
+    if entry <= 0 or current <= 0:
+        return {"allowed": False, "reason": "invalid prices", "units": units}
+    if atr <= 0:
+        return {"allowed": current > entry, "reason": "no atr", "units": units}
+    profit_in_atr = (current - entry) / atr
+    if profit_in_atr >= units * 0.5:
+        return {
+            "allowed": True,
+            "units": units,
+            "next_unit": units + 1,
+            "profit_atr": round(profit_in_atr, 2),
+            "add_price": round(entry + units * 0.5 * atr, 2),
+        }
+    return {"allowed": False, "reason": "insufficient profit", "units": units}
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python turtle.py <ticker> [period]")
