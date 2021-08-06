@@ -128,45 +128,6 @@ def scan(ticker, period="1y", vol_mult=1.5, min_box_days=3):
     return {"ticker": ticker, "boxes": boxes, "signals": signals, "current": current}
 
 
-def box_history(prices, volumes):
-    """return all historical darvas boxes detected in a price/volume series.
-
-    a box forms when price consolidates between a high and low for
-    at least 3 bars, with volume declining.
-    """
-    if len(prices) < 5 or len(volumes) < 5:
-        return []
-    n = min(len(prices), len(volumes))
-    boxes = []
-    i = 0
-    while i < n - 3:
-        high = prices[i]
-        low = prices[i]
-        box_start = i
-        for j in range(i + 1, min(i + 20, n)):
-            if prices[j] > high * 1.02:
-                break
-            if prices[j] < low * 0.98:
-                break
-            high = max(high, prices[j])
-            low = min(low, prices[j])
-            if j - box_start >= 3:
-                vol_start = sum(volumes[box_start:box_start + 2]) / 2
-                vol_end = sum(volumes[j - 1:j + 1]) / 2
-                boxes.append({
-                    "start_idx": box_start,
-                    "end_idx": j,
-                    "top": round(high, 2),
-                    "bottom": round(low, 2),
-                    "width": j - box_start,
-                    "vol_declining": vol_end < vol_start,
-                })
-                i = j
-                break
-        i += 1
-    return boxes
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python darvas.py <ticker> [period]")
