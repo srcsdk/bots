@@ -139,6 +139,30 @@ def scan(ticker, period="1y"):
     return signals
 
 
+def kumo_twist(senkou_a, senkou_b):
+    """detect cloud (kumo) twists where senkou a and b cross.
+
+    bullish twist: senkou_a crosses above senkou_b
+    bearish twist: senkou_a crosses below senkou_b
+    returns list of twist events with index and direction
+    """
+    twists = []
+    for i in range(1, min(len(senkou_a), len(senkou_b))):
+        if senkou_a[i] is None or senkou_b[i] is None:
+            continue
+        if senkou_a[i - 1] is None or senkou_b[i - 1] is None:
+            continue
+        prev_diff = senkou_a[i - 1] - senkou_b[i - 1]
+        curr_diff = senkou_a[i] - senkou_b[i]
+        if prev_diff <= 0 and curr_diff > 0:
+            twists.append({"idx": i, "direction": "bullish",
+                          "senkou_a": senkou_a[i], "senkou_b": senkou_b[i]})
+        elif prev_diff >= 0 and curr_diff < 0:
+            twists.append({"idx": i, "direction": "bearish",
+                          "senkou_a": senkou_a[i], "senkou_b": senkou_b[i]})
+    return twists
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python ichimoku.py <ticker> [period]")
