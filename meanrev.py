@@ -3,7 +3,7 @@
 
 import sys
 from ohlc import fetch_ohlc
-from indicators import rsi, bollinger_bands, sma
+from indicators import rsi, bollinger_bands
 
 
 def zscore_deviation(closes, period=20):
@@ -18,6 +18,25 @@ def zscore_deviation(closes, period=20):
             result.append(0)
         else:
             result.append(round((closes[i] - mean) / std, 4))
+    return result
+
+
+def configurable_decay(signals, decay_rate=0.95):
+    """apply time decay to signal strength.
+
+    older signals fade by decay_rate per period.
+    returns list of signals with added 'strength' field.
+    """
+    if not signals:
+        return signals
+    n = len(signals)
+    result = []
+    for i, sig in enumerate(signals):
+        age = n - 1 - i
+        strength = round(decay_rate ** age, 4)
+        entry = dict(sig)
+        entry["strength"] = strength
+        result.append(entry)
     return result
 
 
@@ -128,6 +147,6 @@ if __name__ == "__main__":
     if period in ("2y", "5y"):
         result = backtest_meanrev(ticker, period)
         if result and result["trades"] > 0:
-            print(f"\nbacktest:")
+            print("\nbacktest:")
             print(f"  trades: {result['trades']}  win rate: {result['win_rate']}%")
             print(f"  avg pnl: {result['avg_pnl']}%  total: {result['total_pnl']}%")
