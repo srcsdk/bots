@@ -167,6 +167,24 @@ def summarize_trades(trades):
     }
 
 
+def position_risk(entry, stop, shares):
+    """calculate dollar risk for a position.
+
+    returns dict with risk per share, total risk, and risk percentage
+    """
+    if entry <= 0 or shares <= 0:
+        return {"risk_per_share": 0, "total_risk": 0, "risk_pct": 0}
+    risk_per_share = abs(entry - stop)
+    total_risk = risk_per_share * shares
+    risk_pct = risk_per_share / entry * 100
+    return {
+        "risk_per_share": round(risk_per_share, 2),
+        "total_risk": round(total_risk, 2),
+        "risk_pct": round(risk_pct, 2),
+        "position_value": round(entry * shares, 2),
+    }
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python risk.py <ticker> [stop_pct] [target_pct]")

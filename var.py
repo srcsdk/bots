@@ -141,6 +141,28 @@ def stress_scenario(returns, shock_pct=-0.10):
     }
 
 
+def marginal_var(portfolio_returns, asset_returns, confidence=0.95):
+    """calculate marginal VaR contribution of an asset.
+
+    measures how much VaR changes when asset weight increases slightly.
+    portfolio_returns: list of portfolio daily returns
+    asset_returns: list of asset daily returns (same length)
+    """
+    base_var = historical_var(portfolio_returns, confidence)
+    n = min(len(portfolio_returns), len(asset_returns))
+    if n < 10:
+        return {"base_var": base_var, "marginal_var": 0, "contribution": 0}
+    delta = 0.01
+    shifted = [portfolio_returns[i] + delta * asset_returns[i] for i in range(n)]
+    shifted_var = historical_var(shifted, confidence)
+    mvar = (shifted_var - base_var) / delta
+    return {
+        "base_var": base_var,
+        "shifted_var": shifted_var,
+        "marginal_var": round(mvar, 4),
+    }
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python var.py <ticker1> [ticker2] ...")

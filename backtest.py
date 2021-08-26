@@ -146,6 +146,45 @@ def compare_strategies(ticker, strategies, period="2y"):
     return results
 
 
+def drawdown_periods(equity_curve):
+    """identify drawdown periods from an equity curve.
+
+    returns list of dicts with start, end, duration, depth for each drawdown.
+    """
+    if len(equity_curve) < 2:
+        return []
+    periods = []
+    peak = equity_curve[0]
+    dd_start = None
+    for i, val in enumerate(equity_curve):
+        if val >= peak:
+            if dd_start is not None:
+                depth = (peak - min(equity_curve[dd_start:i + 1])) / peak * 100
+                periods.append({
+                    "start_idx": dd_start,
+                    "end_idx": i,
+                    "duration": i - dd_start,
+                    "depth_pct": round(depth, 2),
+                    "peak": peak,
+                    "trough": min(equity_curve[dd_start:i + 1]),
+                })
+                dd_start = None
+            peak = val
+        elif dd_start is None:
+            dd_start = i
+    if dd_start is not None:
+        depth = (peak - min(equity_curve[dd_start:])) / peak * 100
+        periods.append({
+            "start_idx": dd_start,
+            "end_idx": len(equity_curve) - 1,
+            "duration": len(equity_curve) - dd_start,
+            "depth_pct": round(depth, 2),
+            "peak": peak,
+            "trough": min(equity_curve[dd_start:]),
+        })
+    return periods
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("usage: python backtest.py <ticker> <strategy>")
