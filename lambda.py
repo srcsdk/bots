@@ -378,29 +378,6 @@ def format_report(result):
     return "\n".join(lines)
 
 
-def put_call_parity(call_price, strike, spot, rate, t):
-    """verify put-call parity and return theoretical put price.
-
-    c + K*e^(-rT) = p + S
-    p = c + K*e^(-rT) - S
-    returns dict with theoretical put price and parity deviation
-    """
-    if t <= 0:
-        return {"put_price": max(0, strike - spot), "deviation": 0}
-    pv_strike = strike * math.exp(-rate * t)
-    theoretical_put = call_price + pv_strike - spot
-    parity_value = call_price + pv_strike
-    spot_plus_put = spot + max(0, theoretical_put)
-    deviation = abs(parity_value - spot_plus_put)
-    return {
-        "put_price": round(max(0, theoretical_put), 4),
-        "pv_strike": round(pv_strike, 4),
-        "parity_lhs": round(parity_value, 4),
-        "parity_rhs": round(spot_plus_put, 4),
-        "deviation": round(deviation, 4),
-    }
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 5:
         print("usage: python lambda.py <ticker> <call|put> <strike> <expiry>")
