@@ -3,6 +3,7 @@
 
 import sys
 import time
+from ohlc import fetch_ohlc
 
 
 WATCHLIST_DEFAULT = [
@@ -22,16 +23,6 @@ def load_watchlist(filename=None):
         except FileNotFoundError:
             pass
     return WATCHLIST_DEFAULT
-
-
-def custom_strategy_list(strategy_names):
-    """validate and filter available strategies for scanning.
-
-    returns list of valid strategy names from the input list.
-    """
-    available = {"gapup", "bcross", "movo", "nobr", "mobr"}
-    valid = [s for s in strategy_names if s in available]
-    return valid
 
 
 def scan_all(tickers, strategy_name, period="1y"):
@@ -130,7 +121,7 @@ if __name__ == "__main__":
 
         picks = consensus_picks(results)
         if picks:
-            print("\nconsensus picks (multiple strategies agree):")
+            print(f"\nconsensus picks (multiple strategies agree):")
             for p in picks:
                 print(f"  {p['ticker']:<6} {p['count']} strategies: "
                       f"{', '.join(p['strategies'])}")
