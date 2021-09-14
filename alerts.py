@@ -10,15 +10,6 @@ from indicators import rsi, macd, sma, bollinger_bands
 
 
 ALERTS_FILE = os.path.join(os.path.dirname(__file__), "alerts.json")
-ALERT_LOG_FILE = os.path.join(os.path.dirname(__file__), "alert_log.json")
-
-
-def load_alert_log():
-    """load alert fire history from log file"""
-    if os.path.exists(ALERT_LOG_FILE):
-        with open(ALERT_LOG_FILE, "r") as f:
-            return json.load(f)
-    return []
 
 
 def load_alerts():
@@ -182,25 +173,6 @@ def monitor(interval=300):
         active = [a for a in load_alerts() if a["active"]]
         print(f"  {len(active)} active alerts, {len(triggered)} triggered")
         time.sleep(interval)
-
-
-def alert_cooldown(ticker, alert_type, cooldown_mins=60):
-    """check if an alert is in cooldown period to prevent duplicates.
-
-    reads recent alerts from log and returns True if safe to fire.
-    """
-    log = load_alert_log()
-    now = time.time()
-    cooldown_secs = cooldown_mins * 60
-    for entry in reversed(log):
-        if entry.get("ticker") != ticker:
-            continue
-        if entry.get("type") != alert_type:
-            continue
-        fired_at = entry.get("timestamp", 0)
-        if now - fired_at < cooldown_secs:
-            return False
-    return True
 
 
 if __name__ == "__main__":

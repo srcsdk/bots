@@ -115,35 +115,6 @@ def multi_asset_kelly(assets, max_leverage=1.0):
     return results
 
 
-def kelly_table(win_rate, avg_win, avg_loss, steps=10):
-    """generate table of kelly fractions and expected growth rates.
-
-    shows how different fraction sizes affect expected geometric growth.
-    useful for comparing full kelly vs fractional kelly approaches.
-    """
-    import math
-    full = kelly_fraction(win_rate, avg_win, avg_loss)
-    if full <= 0:
-        return []
-    rows = []
-    for i in range(1, steps + 1):
-        frac = full * i / steps
-        p = win_rate
-        q = 1 - p
-        win_factor = 1 + frac * avg_win / 100
-        loss_factor = 1 - frac * abs(avg_loss) / 100
-        if win_factor <= 0 or loss_factor <= 0:
-            g = -999
-        else:
-            g = p * math.log(win_factor) + q * math.log(loss_factor)
-        rows.append({
-            "fraction": round(frac, 4),
-            "pct_of_kelly": round(i / steps * 100, 0),
-            "growth_rate": round(g * 100, 4),
-        })
-    return rows
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         print("usage: python kelly.py <win_rate> <avg_win_pct> <avg_loss_pct>")

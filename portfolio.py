@@ -183,32 +183,6 @@ def efficient_frontier(tickers, period="1y", n_points=20):
     return frontier
 
 
-def rebalance_weights(current, target, threshold=0.05):
-    """determine which positions need rebalancing.
-
-    current: dict of {ticker: current_weight}
-    target: dict of {ticker: target_weight}
-    threshold: minimum deviation to trigger rebalance
-    returns list of tickers that need adjustment
-    """
-    adjustments = []
-    all_tickers = set(list(current.keys()) + list(target.keys()))
-    for ticker in all_tickers:
-        cur = current.get(ticker, 0)
-        tgt = target.get(ticker, 0)
-        diff = tgt - cur
-        if abs(diff) >= threshold:
-            adjustments.append({
-                "ticker": ticker,
-                "current": round(cur, 4),
-                "target": round(tgt, 4),
-                "diff": round(diff, 4),
-                "action": "buy" if diff > 0 else "sell",
-            })
-    adjustments.sort(key=lambda x: abs(x["diff"]), reverse=True)
-    return adjustments
-
-
 if __name__ == "__main__":
     portfolio = load_portfolio()
 
