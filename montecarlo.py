@@ -143,6 +143,33 @@ def tail_risk(simulations, percentile=1):
     }
 
 
+def bootstrap_returns(returns, n_samples=1000, seed=None):
+    """bootstrap resampling of return series for confidence intervals.
+
+    randomly resamples returns with replacement to estimate
+    distribution of mean return.
+    returns dict with mean, std, and percentile bounds
+    """
+    if not returns or n_samples < 1:
+        return {}
+    if seed is not None:
+        random.seed(seed)
+    n = len(returns)
+    means = []
+    for _ in range(n_samples):
+        sample = [random.choice(returns) for _ in range(n)]
+        means.append(sum(sample) / n)
+    means.sort()
+    mean_of_means = sum(means) / len(means)
+    return {
+        "mean": round(mean_of_means * 100, 4),
+        "std": round((sum((m - mean_of_means) ** 2 for m in means) / len(means)) ** 0.5 * 100, 4),
+        "ci_2_5": round(means[int(len(means) * 0.025)] * 100, 4),
+        "ci_97_5": round(means[int(len(means) * 0.975)] * 100, 4),
+        "n_samples": n_samples,
+    }
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python montecarlo.py <ticker> [sims] [days]")
