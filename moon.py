@@ -11,11 +11,11 @@ usage: python moon.py AMC GME BB
 import sys
 import time
 
-from reta import analyze_ticker, score_squeeze_potential, fetch_finviz_stats
+from reta import score_squeeze_potential, fetch_finviz_stats
 from ohlc import fetch_ohlc
 from hype import (
     scan_subreddit, merge_ticker_data, detect_hype_cycles,
-    compute_hype_score, score_sentiment, SUBREDDITS,
+    compute_hype_score, SUBREDDITS,
 )
 
 
@@ -169,7 +169,7 @@ def analyze_moon(tickers, period="6mo"):
     Returns a list of result dicts sorted by combined score descending.
     """
     print(f"moon analysis: {len(tickers)} tickers")
-    print(f"scanning social media for hype data...")
+    print("scanning social media for hype data...")
     hype_data = gather_hype_data(tickers)
 
     results = []
@@ -253,6 +253,36 @@ def format_report(results):
                          f"signal={r['signal']}")
 
     return "\n".join(lines)
+
+
+def social_momentum_decay(signals, half_life=5):
+    """apply exponential decay weighting to older social signals.
+
+    signals: list of dicts with numeric values to weight
+    half_life: number of periods for signal to lose half its weight
+    returns list of weighted signal values
+    """
+    import math
+    decay_rate = math.log(2) / half_life
+    n = len(signals)
+    weighted = []
+    for i, sig in enumerate(signals):
+        age = n - 1 - i
+        weight = math.exp(-decay_rate * age)
+        if isinstance(sig, dict):
+            w_sig = {}
+            for k, v in sig.items():
+                if isinstance(v, (int, float)):
+                    w_sig[k] = round(v * weight, 4)
+                else:
+                    w_sig[k] = v
+            w_sig["decay_weight"] = round(weight, 4)
+            weighted.append(w_sig)
+        elif isinstance(sig, (int, float)):
+            weighted.append(round(sig * weight, 4))
+        else:
+            weighted.append(sig)
+    return weighted
 
 
 if __name__ == "__main__":

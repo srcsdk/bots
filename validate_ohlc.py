@@ -46,7 +46,6 @@ def validate_series(rows):
 
     all_issues = []
     dates_seen = set()
-    prev_date = None
 
     for i, row in enumerate(rows):
         row_issues = validate_row(row)
@@ -59,7 +58,6 @@ def validate_series(rows):
             all_issues.append({"index": i, "date": date,
                                "issues": ["duplicate date"]})
         dates_seen.add(date)
-        prev_date = date
 
     return {
         "valid": len(all_issues) == 0,
@@ -67,6 +65,47 @@ def validate_series(rows):
         "issues": all_issues,
         "date_range": f"{rows[0].get('date', '?')} to {rows[-1].get('date', '?')}",
     }
+
+
+def check_timestamps(rows):
+    """validate date ordering and flag gaps > 5 trading days.
+
+    returns list of gap warnings with start/end dates.
+    """
+    if not rows or len(rows) < 2:
+        return []
+
+    gaps = []
+    for i in range(1, len(rows)):
+        prev_date = rows[i - 1].get("date", "")
+        curr_date = rows[i].get("date", "")
+        if curr_date <= prev_date:
+            gaps.append({
+                "index": i,
+                "issue": "out_of_order",
+                "prev": prev_date,
+                "curr": curr_date,
+            })
+            continue
+        if len(prev_date) >= 10 and len(curr_date) >= 10:
+            py = int(prev_date[:4])
+            pm = int(prev_date[5:7])
+            pd = int(prev_date[8:10])
+            cy = int(curr_date[:4])
+            cm = int(curr_date[5:7])
+            cd = int(curr_date[8:10])
+            prev_days = py * 365 + pm * 30 + pd
+            curr_days = cy * 365 + cm * 30 + cd
+            day_gap = curr_days - prev_days
+            if day_gap > 7:
+                gaps.append({
+                    "index": i,
+                    "issue": "large_gap",
+                    "prev": prev_date,
+                    "curr": curr_date,
+                    "approx_days": day_gap,
+                })
+    return gaps
 
 
 def print_validation(result):
