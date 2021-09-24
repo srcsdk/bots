@@ -123,6 +123,25 @@ def rolling_correlation_regime(series_a, series_b, window=60):
     return results
 
 
+def beta(asset_returns, market_returns):
+    """calculate beta of asset relative to market.
+
+    beta = covariance(asset, market) / variance(market)
+    """
+    n = min(len(asset_returns), len(market_returns))
+    if n < 2:
+        return 0
+    a = asset_returns[:n]
+    m = market_returns[:n]
+    mean_a = sum(a) / n
+    mean_m = sum(m) / n
+    cov = sum((a[i] - mean_a) * (m[i] - mean_m) for i in range(n)) / n
+    var_m = sum((m[i] - mean_m) ** 2 for i in range(n)) / n
+    if var_m == 0:
+        return 0
+    return round(cov / var_m, 4)
+
+
 def format_matrix(matrix, tickers):
     """format correlation matrix as aligned text"""
     col_width = 8
