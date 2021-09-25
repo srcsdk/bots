@@ -5,6 +5,8 @@ testing different smoothing methods to compare accuracy
 against reference implementations.
 """
 
+import sys
+
 
 def rsi_simple(prices, period=14):
     """rsi with simple average smoothing.
@@ -68,33 +70,6 @@ def rsi_wilder(prices, period=14):
             rs = avg_gain / avg_loss
             result.append(round(100 - (100 / (1 + rs)), 2))
 
-    return result
-
-
-def smoothed_rsi(closes, period=14, smooth=3):
-    """rsi with additional ema smoothing applied.
-
-    calculates standard wilder rsi then smooths with ema
-    to reduce noise and false signals.
-    """
-    raw = rsi_wilder(closes, period)
-    valid = [v for v in raw if v is not None]
-    if len(valid) < smooth:
-        return raw
-
-    k = 2 / (smooth + 1)
-    smoothed = [valid[0]]
-    for i in range(1, len(valid)):
-        smoothed.append(round(valid[i] * k + smoothed[-1] * (1 - k), 2))
-
-    result = []
-    j = 0
-    for v in raw:
-        if v is None:
-            result.append(None)
-        else:
-            result.append(smoothed[j])
-            j += 1
     return result
 
 

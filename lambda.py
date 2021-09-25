@@ -205,6 +205,7 @@ def evaluate_option(spot, strike, rate, vol, t, option_type, technicals):
     delta = greeks["delta"]
     theta = greeks["theta"]
     vega = greeks["vega"]
+    gamma = greeks["gamma"]
 
     scores = []
     reasons = []
@@ -356,7 +357,7 @@ def format_report(result):
 
     ev = result["evaluation"]
     greeks = ev.get("greeks", {})
-    lines.append("\ngreeks:")
+    lines.append(f"\ngreeks:")
     lines.append(f"  price:  {greeks.get('price', 0):.4f}")
     lines.append(f"  delta:  {greeks.get('delta', 0):.4f}")
     lines.append(f"  gamma:  {greeks.get('gamma', 0):.4f}")
@@ -370,35 +371,12 @@ def format_report(result):
     signal_display = signal.upper()
     lines.append(f"\nsignal:          {signal_display} (score: {score}/{max_score})")
 
-    lines.append("\nanalysis:")
+    lines.append(f"\nanalysis:")
     for reason in ev.get("reasons", []):
         lines.append(f"  - {reason}")
 
     lines.append(f"{'=' * 60}")
     return "\n".join(lines)
-
-
-def put_call_parity(call_price, strike, spot, rate, t):
-    """verify put-call parity and return theoretical put price.
-
-    c + K*e^(-rT) = p + S
-    p = c + K*e^(-rT) - S
-    returns dict with theoretical put price and parity deviation
-    """
-    if t <= 0:
-        return {"put_price": max(0, strike - spot), "deviation": 0}
-    pv_strike = strike * math.exp(-rate * t)
-    theoretical_put = call_price + pv_strike - spot
-    parity_value = call_price + pv_strike
-    spot_plus_put = spot + max(0, theoretical_put)
-    deviation = abs(parity_value - spot_plus_put)
-    return {
-        "put_price": round(max(0, theoretical_put), 4),
-        "pv_strike": round(pv_strike, 4),
-        "parity_lhs": round(parity_value, 4),
-        "parity_rhs": round(spot_plus_put, 4),
-        "deviation": round(deviation, 4),
-    }
 
 
 if __name__ == "__main__":
