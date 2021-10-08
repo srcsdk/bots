@@ -173,7 +173,6 @@ def sharpe_ratio(returns, risk_free_rate=0.02, periods=252):
     """calculate annualized sharpe ratio from daily returns"""
     if not returns or len(returns) < 2:
         return None
-    mean_return = sum(returns) / len(returns)
     daily_rf = risk_free_rate / periods
     excess = [r - daily_rf for r in returns]
     mean_excess = sum(excess) / len(excess)
@@ -248,6 +247,75 @@ def adl(highs, lows, closes, volumes):
     return result
 
 
+def volume_weighted_rsi(closes, volumes, period=14):
+    """rsi weighted by volume.
+
+    gives more weight to price changes on high volume bars.
+    """
+    if len(closes) < period + 1:
+        return [None] * len(closes)
+
+    deltas = [closes[i] - closes[i - 1] for i in range(1, len(closes))]
+    weighted_gains = [max(d, 0) * volumes[i + 1] for i, d in enumerate(deltas)]
+    weighted_losses = [abs(min(d, 0)) * volumes[i + 1] for i, d in enumerate(deltas)]
+
+    avg_gain = sum(weighted_gains[:period]) / period
+    avg_loss = sum(weighted_losses[:period]) / period
+
+    result = [None] * period
+    if avg_loss == 0:
+        result.append(100.0)
+    else:
+        rs = avg_gain / avg_loss
+        result.append(round(100 - (100 / (1 + rs)), 2))
+
+    for i in range(period, len(deltas)):
+        avg_gain = (avg_gain * (period - 1) + weighted_gains[i]) / period
+        avg_loss = (avg_loss * (period - 1) + weighted_losses[i]) / period
+        if avg_loss == 0:
+            result.append(100.0)
+        else:
+            rs = avg_gain / avg_loss
+            result.append(round(100 - (100 / (1 + rs)), 2))
+
+    return result
+
+
+def accumulation_distribution(highs, lows, closes, volumes):
+    """accumulation/distribution line indicator.
+
+    measures cumulative money flow volume based on
+    where the close falls within the high-low range.
+    """
+    result = []
+    cumulative = 0
+    for i in range(len(closes)):
+        hl = highs[i] - lows[i]
+        if hl == 0:
+            mfv = 0
+        else:
+            clv = ((closes[i] - lows[i]) - (highs[i] - closes[i])) / hl
+            mfv = clv * volumes[i]
+        cumulative += mfv
+        result.append(round(cumulative, 2))
+    return result
+
+
+def donchian_channel(highs, lows, period=20):
+    """donchian channel: upper and lower channel values.
+
+    upper = highest high over period
+    lower = lowest low over period
+    """
+    n = len(highs)
+    upper = [None] * (period - 1)
+    lower = [None] * (period - 1)
+    for i in range(period - 1, n):
+        upper.append(max(highs[i - period + 1:i + 1]))
+        lower.append(min(lows[i - period + 1:i + 1]))
+    return upper, lower
+
+
 def stochastic(highs, lows, closes, k_period=14, d_period=3):
     """stochastic oscillator %k and %d.
 
@@ -305,3 +373,52 @@ def cci(highs, lows, closes, period=20):
         else:
             result.append(round((tp_current - mean_tp) / (0.015 * mean_dev), 2))
     return result
+
+
+def rate_of_change(closes, period=12):
+    """calculate rate of change (ROC) indicator.
+
+    roc = (close - close_n_periods_ago) / close_n_periods_ago * 100
+    """
+    n = len(closes)
+    result = [None] * n
+    for i in range(period, n):
+        if closes[i - period] != 0:
+            result[i] = round((closes[i] - closes[i - period]) / closes[i - period] * 100, 2)
+    return result
+
+
+def keltner_channel(highs, lows, closes, period=20, mult=1.5):
+    """calculate keltner channels using EMA and ATR.
+
+    returns (upper, middle, lower) lists
+    """
+    n = len(closes)
+    if n < period:
+        return [None] * n, [None] * n, [None] * n
+    ema = [None] * n
+    ema[period - 1] = sum(closes[:period]) / period
+    k = 2 / (period + 1)
+    for i in range(period, n):
+        ema[i] = closes[i] * k + ema[i - 1] * (1 - k)
+    atr_vals = [None] * n
+    for i in range(1, n):
+        tr = max(highs[i] - lows[i],
+                 abs(highs[i] - closes[i - 1]),
+                 abs(lows[i] - closes[i - 1]))
+        if i == period:
+            trs = [max(highs[j] - lows[j],
+                       abs(highs[j] - closes[j - 1]),
+                       abs(lows[j] - closes[j - 1]))
+                   for j in range(1, period + 1)]
+            atr_vals[i] = sum(trs) / len(trs)
+        elif i > period and atr_vals[i - 1] is not None:
+            atr_vals[i] = (atr_vals[i - 1] * (period - 1) + tr) / period
+    upper = [None] * n
+    lower = [None] * n
+    for i in range(n):
+        if ema[i] is not None and atr_vals[i] is not None:
+            upper[i] = round(ema[i] + mult * atr_vals[i], 2)
+            lower[i] = round(ema[i] - mult * atr_vals[i], 2)
+            ema[i] = round(ema[i], 2)
+    return upper, ema, lower

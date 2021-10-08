@@ -56,6 +56,24 @@ def price_change(values):
     return changes
 
 
+def obv(closes, volumes):
+    """on-balance volume indicator.
+
+    running total of volume, added on up days, subtracted on down days.
+    """
+    if len(closes) < 2 or len(closes) != len(volumes):
+        return [0] * len(closes)
+    result = [volumes[0]]
+    for i in range(1, len(closes)):
+        if closes[i] > closes[i - 1]:
+            result.append(result[-1] + volumes[i])
+        elif closes[i] < closes[i - 1]:
+            result.append(result[-1] - volumes[i])
+        else:
+            result.append(result[-1])
+    return result
+
+
 def percent_change(values):
     """calculate period-over-period percent changes"""
     if len(values) < 2:
