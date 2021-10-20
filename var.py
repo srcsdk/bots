@@ -111,58 +111,6 @@ def stress_test(returns, scenarios=None):
     return results
 
 
-def conditional_var(returns, confidence=0.95):
-    """calculate conditional var (expected shortfall / cvar).
-
-    average loss in the worst (1-confidence)% of cases
-    """
-    if not returns:
-        return 0
-    sorted_r = sorted(returns)
-    cutoff = max(1, int(len(sorted_r) * (1 - confidence)))
-    tail = sorted_r[:cutoff]
-    return round(sum(tail) / len(tail) * 100, 4)
-
-
-def stress_scenario(returns, shock_pct=-0.10):
-    """simulate a market shock by shifting all returns by shock_pct.
-
-    returns var and cvar metrics under the stressed distribution
-    """
-    if not returns:
-        return {}
-    stressed = [r + shock_pct for r in returns]
-    return {
-        "shock_pct": shock_pct,
-        "var_95": historical_var(stressed, 0.95),
-        "cvar_95": conditional_var(stressed, 0.95),
-        "mean_return": round(sum(stressed) / len(stressed) * 100, 4),
-        "min_return": round(min(stressed) * 100, 4),
-    }
-
-
-def marginal_var(portfolio_returns, asset_returns, confidence=0.95):
-    """calculate marginal VaR contribution of an asset.
-
-    measures how much VaR changes when asset weight increases slightly.
-    portfolio_returns: list of portfolio daily returns
-    asset_returns: list of asset daily returns (same length)
-    """
-    base_var = historical_var(portfolio_returns, confidence)
-    n = min(len(portfolio_returns), len(asset_returns))
-    if n < 10:
-        return {"base_var": base_var, "marginal_var": 0, "contribution": 0}
-    delta = 0.01
-    shifted = [portfolio_returns[i] + delta * asset_returns[i] for i in range(n)]
-    shifted_var = historical_var(shifted, confidence)
-    mvar = (shifted_var - base_var) / delta
-    return {
-        "base_var": base_var,
-        "shifted_var": shifted_var,
-        "marginal_var": round(mvar, 4),
-    }
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python var.py <ticker1> [ticker2] ...")
@@ -195,7 +143,7 @@ if __name__ == "__main__":
             returns_all.extend(daily_returns([r["close"] for r in rows]))
 
     if returns_all:
-        print("\nstress test:")
+        print(f"\nstress test:")
         stress = stress_test(returns_all)
         for name, vals in stress.items():
             print(f"  {name:<18} var={vals['var_95']:+.4f}%  "
