@@ -129,6 +129,86 @@ def rebalance_targets(portfolio, targets):
     return trades
 
 
+def efficient_frontier(tickers, period="1y", n_points=20):
+    """generate efficient frontier points by varying target return.
+
+    uses simple mean-variance with equal-step weight exploration.
+    returns list of (expected_return, volatility, weights) tuples
+    """
+    from correlation import daily_returns
+
+    all_returns = []
+    valid = []
+    for ticker in tickers:
+        rows = fetch_ohlc(ticker, period)
+        if rows and len(rows) > 30:
+            closes = [r["close"] for r in rows]
+            all_returns.append(daily_returns(closes))
+            valid.append(ticker)
+
+    if len(valid) < 2:
+        return []
+
+    min_len = min(len(r) for r in all_returns)
+    all_returns = [r[:min_len] for r in all_returns]
+    n_assets = len(valid)
+
+    means = [sum(r) / len(r) * 252 for r in all_returns]
+    stds = [
+        (sum((x - sum(r) / len(r)) ** 2 for x in r) / len(r)) ** 0.5 * (252 ** 0.5)
+        for r in all_returns
+    ]
+
+    frontier = []
+    for step in range(n_points + 1):
+        t = step / n_points
+        weights = [0.0] * n_assets
+        weights[0] = 1.0 - t
+        if n_assets > 1:
+            weights[1] = t
+        for k in range(2, n_assets):
+            weights[k] = 0.0
+
+        port_ret = sum(weights[i] * means[i] for i in range(n_assets))
+        port_var = sum(
+            weights[i] ** 2 * stds[i] ** 2 for i in range(n_assets)
+        )
+        port_vol = port_var ** 0.5
+        frontier.append({
+            "expected_return": round(port_ret, 4),
+            "volatility": round(port_vol, 4),
+            "weights": {valid[i]: round(weights[i], 4) for i in range(n_assets)},
+        })
+
+    return frontier
+
+
+def rebalance_weights(current, target, threshold=0.05):
+    """determine which positions need rebalancing.
+
+    current: dict of {ticker: current_weight}
+    target: dict of {ticker: target_weight}
+    threshold: minimum deviation to trigger rebalance
+    returns list of tickers that need adjustment
+    """
+    adjustments = []
+    all_tickers = set(list(current.keys()) + list(target.keys()))
+    for ticker in all_tickers:
+        cur = current.get(ticker, 0)
+        tgt = target.get(ticker, 0)
+        diff = tgt - cur
+        if abs(diff) >= threshold:
+            adjustments.append({
+                "ticker": ticker,
+                "current": round(cur, 4),
+                "target": round(tgt, 4),
+                "diff": round(diff, 4),
+                "action": "buy" if diff > 0 else "sell",
+            })
+    adjustments.sort(key=lambda x: abs(x["diff"]), reverse=True)
+    return adjustments
+
+
 if __name__ == "__main__":
     portfolio = load_portfolio()
 

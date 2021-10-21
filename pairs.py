@@ -36,6 +36,28 @@ def zscore(values, lookback=20):
     return result
 
 
+def zscore_normalization(spread, window=20):
+    """calculate rolling z-score of the spread series.
+
+    normalizes spread values relative to a rolling window
+    for comparable signal strength across different pairs.
+    """
+    result = [None] * min(window - 1, len(spread))
+    for i in range(window - 1, len(spread)):
+        w = [v for v in spread[i - window + 1:i + 1] if v is not None]
+        if len(w) < 2:
+            result.append(None)
+            continue
+        mean = sum(w) / len(w)
+        variance = sum((x - mean) ** 2 for x in w) / len(w)
+        std = variance ** 0.5
+        if std == 0:
+            result.append(0.0)
+        else:
+            result.append(round((spread[i] - mean) / std, 4))
+    return result
+
+
 def find_entry_signals(z_scores, dates, threshold=2.0):
     """find pair trade entry signals from z-score crossings.
 
@@ -131,6 +153,69 @@ def backtest_pair(ticker_a, ticker_b, period="2y", entry_z=2.0, exit_z=0.5):
         "win_rate": round(len(wins) / len(trades) * 100, 1) if trades else 0,
         "avg_pnl": round(sum(t["pnl_pct"] for t in trades) / len(trades), 2) if trades else 0,
         "total_pnl": round(sum(t["pnl_pct"] for t in trades), 2),
+    }
+
+
+def spread_percentile(series_a, series_b, lookback=60):
+    """calculate current spread percentile rank over lookback window.
+
+    useful for determining if spread is at extremes for pairs entry.
+    returns dict with current spread, percentile, and z-score.
+    """
+    n = min(len(series_a), len(series_b))
+    if n < lookback:
+        return {"percentile": 50, "zscore": 0}
+    spreads = [series_a[i] - series_b[i] for i in range(n)]
+    window = spreads[-lookback:]
+    current = window[-1]
+    below = sum(1 for s in window if s < current)
+    pctl = below / len(window) * 100
+    mean_s = sum(window) / len(window)
+    std_s = (sum((s - mean_s) ** 2 for s in window) / len(window)) ** 0.5
+    z = (current - mean_s) / std_s if std_s > 0 else 0
+    return {
+        "current_spread": round(current, 4),
+        "percentile": round(pctl, 1),
+        "zscore": round(z, 4),
+        "mean": round(mean_s, 4),
+        "std": round(std_s, 4),
+    }
+
+
+def cointegration_test(series_a, series_b):
+    """simple cointegration test proxy using spread stationarity.
+
+    runs OLS regression of a on b, then checks if residuals
+    are mean-reverting by testing spread autocorrelation.
+    returns dict with hedge ratio and stationarity indicator.
+    """
+    n = min(len(series_a), len(series_b))
+    if n < 30:
+        return {"cointegrated": False, "reason": "insufficient data"}
+    a = series_a[:n]
+    b = series_b[:n]
+    mean_b = sum(b) / n
+    mean_a = sum(a) / n
+    num = sum((b[i] - mean_b) * (a[i] - mean_a) for i in range(n))
+    den = sum((b[i] - mean_b) ** 2 for i in range(n))
+    if den == 0:
+        return {"cointegrated": False, "reason": "zero variance"}
+    hedge_ratio = num / den
+    spread = [a[i] - hedge_ratio * b[i] for i in range(n)]
+    spread_mean = sum(spread) / n
+    spread_std = (sum((s - spread_mean) ** 2 for s in spread) / n) ** 0.5
+    if spread_std == 0:
+        return {"cointegrated": False, "reason": "zero spread variance"}
+    crossings = sum(1 for i in range(1, n)
+                    if (spread[i - 1] - spread_mean) * (spread[i] - spread_mean) < 0)
+    crossing_rate = crossings / n
+    return {
+        "cointegrated": crossing_rate > 0.02,
+        "hedge_ratio": round(hedge_ratio, 4),
+        "spread_mean": round(spread_mean, 4),
+        "spread_std": round(spread_std, 4),
+        "mean_crossings": crossings,
+        "crossing_rate": round(crossing_rate, 4),
     }
 
 

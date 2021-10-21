@@ -3,7 +3,7 @@
 
 import sys
 from ohlc import fetch_ohlc
-from indicators import rsi, bollinger_bands, sma
+from indicators import rsi, bollinger_bands
 
 
 def zscore_deviation(closes, period=20):
@@ -18,6 +18,25 @@ def zscore_deviation(closes, period=20):
             result.append(0)
         else:
             result.append(round((closes[i] - mean) / std, 4))
+    return result
+
+
+def configurable_decay(signals, decay_rate=0.95):
+    """apply time decay to signal strength.
+
+    older signals fade by decay_rate per period.
+    returns list of signals with added 'strength' field.
+    """
+    if not signals:
+        return signals
+    n = len(signals)
+    result = []
+    for i, sig in enumerate(signals):
+        age = n - 1 - i
+        strength = round(decay_rate ** age, 4)
+        entry = dict(sig)
+        entry["strength"] = strength
+        result.append(entry)
     return result
 
 
@@ -104,6 +123,55 @@ def backtest_meanrev(ticker, period="2y"):
     }
 
 
+def half_life(spread):
+    """estimate mean reversion half-life from a spread series.
+
+    uses OLS regression of spread changes on lagged spread.
+    half_life = -log(2) / beta where beta is the AR(1) coefficient.
+    returns half-life in periods (days), or None if not mean-reverting.
+    """
+    import math
+    n = len(spread)
+    if n < 10:
+        return None
+    y = [spread[i] - spread[i - 1] for i in range(1, n)]
+    x = spread[:-1]
+    mean_x = sum(x) / len(x)
+    mean_y = sum(y) / len(y)
+    num = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(len(y)))
+    den = sum((x[i] - mean_x) ** 2 for i in range(len(x)))
+    if den == 0:
+        return None
+    beta = num / den
+    if beta >= 0:
+        return None
+    hl = -math.log(2) / beta
+    return round(hl, 2)
+
+
+def zscore_signal(closes, lookback=20):
+    """generate z-score based mean reversion signals.
+
+    buy when z-score drops below -2 (oversold), sell above +2 (overbought).
+    returns list of signal dicts with index, zscore, and direction.
+    """
+    if len(closes) < lookback + 1:
+        return []
+    signals = []
+    for i in range(lookback, len(closes)):
+        window = closes[i - lookback:i]
+        mean = sum(window) / lookback
+        std = (sum((x - mean) ** 2 for x in window) / lookback) ** 0.5
+        if std == 0:
+            continue
+        z = (closes[i] - mean) / std
+        if z <= -2.0:
+            signals.append({"idx": i, "zscore": round(z, 2), "direction": "buy"})
+        elif z >= 2.0:
+            signals.append({"idx": i, "zscore": round(z, 2), "direction": "sell"})
+    return signals
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python meanrev.py <ticker> [period]")
@@ -128,6 +196,6 @@ if __name__ == "__main__":
     if period in ("2y", "5y"):
         result = backtest_meanrev(ticker, period)
         if result and result["trades"] > 0:
-            print(f"\nbacktest:")
+            print("\nbacktest:")
             print(f"  trades: {result['trades']}  win rate: {result['win_rate']}%")
             print(f"  avg pnl: {result['avg_pnl']}%  total: {result['total_pnl']}%")

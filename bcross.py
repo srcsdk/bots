@@ -52,6 +52,53 @@ def scan(ticker, period="1y"):
     return signals
 
 
+def scan_multi_period(ticker, periods=None):
+    """run scan across multiple periods and return combined signals with period context"""
+    if periods is None:
+        periods = ["3mo", "6mo", "1y", "2y"]
+    combined = []
+    seen_dates = set()
+    for p in periods:
+        signals = scan(ticker, p)
+        for sig in signals:
+            if sig["date"] not in seen_dates:
+                sig["period"] = p
+                combined.append(sig)
+                seen_dates.add(sig["date"])
+    combined.sort(key=lambda s: s["date"])
+    return combined
+
+
+def bollinger_squeeze_detect(closes, period=20):
+    """detect bollinger band squeeze (low volatility periods).
+
+    returns list of booleans where True indicates squeeze is active.
+    squeeze = bandwidth at or near its minimum over lookback window.
+    """
+    if len(closes) < period:
+        return [False] * len(closes)
+    result = [False] * len(closes)
+    bandwidths = []
+    for i in range(period - 1, len(closes)):
+        window = closes[i - period + 1:i + 1]
+        mean = sum(window) / period
+        std = (sum((x - mean) ** 2 for x in window) / period) ** 0.5
+        if mean == 0:
+            bandwidths.append((i, 0))
+            continue
+        bw = (std * 2) / mean
+        bandwidths.append((i, bw))
+    if len(bandwidths) < 2:
+        return result
+    bw_vals = [b[1] for b in bandwidths]
+    min_bw = min(bw_vals)
+    threshold = min_bw * 1.1
+    for idx, bw in bandwidths:
+        if bw <= threshold:
+            result[idx] = True
+    return result
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python bcross.py <ticker> [period]")
