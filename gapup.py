@@ -49,24 +49,6 @@ def scan(ticker, period="1y"):
     return signals
 
 
-def gap_magnitude(opens, closes):
-    """measure gap size as percentage for each bar.
-
-    gap = (open[i] - close[i-1]) / close[i-1] * 100
-    returns list of gap percentages (positive = gap up, negative = gap down)
-    """
-    if len(opens) < 2 or len(closes) < 2:
-        return []
-    gaps = []
-    for i in range(1, len(opens)):
-        if closes[i - 1] == 0:
-            gaps.append(0.0)
-            continue
-        pct = (opens[i] - closes[i - 1]) / closes[i - 1] * 100
-        gaps.append(round(pct, 4))
-    return gaps
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python gapup.py <ticker> [period]")
@@ -85,34 +67,6 @@ if __name__ == "__main__":
             print(f"  {s['date']} ${s['price']:.2f} "
                   f"rsi={s['rsi']:.1f} hist={s['macd_hist']:.4f}")
         print(f"\n{len(signals)} signals")
-
-
-def scan_with_trailing_stop(ticker, period="1y", atr_mult=2.0):
-    """scan for gapup signals with atr-based trailing stop levels"""
-    from indicators import atr as calc_atr
-    rows = fetch_ohlc(ticker, period)
-    if not rows or len(rows) < 60:
-        return []
-
-    closes = [r["close"] for r in rows]
-    highs = [r["high"] for r in rows]
-    lows = [r["low"] for r in rows]
-
-    atr_vals = calc_atr(highs, lows, closes, 14)
-    base_signals = scan(ticker, period)
-
-    date_to_idx = {r["date"]: i for i, r in enumerate(rows)}
-    results = []
-    for sig in base_signals:
-        idx = date_to_idx.get(sig["date"])
-        if idx is None or atr_vals[idx] is None:
-            continue
-        trail_stop = round(sig["price"] - atr_mult * atr_vals[idx], 2)
-        sig["trailing_stop"] = trail_stop
-        sig["atr"] = round(atr_vals[idx], 4)
-        results.append(sig)
-
-    return results
 
 
 def backtest(ticker, period="2y"):

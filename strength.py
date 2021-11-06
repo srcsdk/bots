@@ -4,7 +4,7 @@
 import sys
 import time
 from ohlc import fetch_ohlc
-from indicators import rsi
+from indicators import rsi, sma
 
 
 def relative_strength(closes, benchmark_closes):
@@ -70,9 +70,8 @@ def rank_watchlist(tickers, benchmark="SPY", period="1y"):
         rs_current = rs[-1] if rs else 1.0
         rs_trend = "up" if len(rs) > 20 and rs[-1] > rs[-20] else "down"
 
-        composite = round(
-            mom * 0.5 + (rs_current - 1) * 100 * 0.3 +
-            (current_rsi - 50) * 0.2, 2)
+        composite = round(mom * 0.5 + (rs_current - 1) * 100 * 0.3 +
+                         (current_rsi - 50) * 0.2, 2)
 
         results.append({
             "ticker": ticker,
@@ -90,80 +89,6 @@ def rank_watchlist(tickers, benchmark="SPY", period="1y"):
 
     results.sort(key=lambda r: r["composite"], reverse=True)
     return results
-
-
-def sector_relative(ticker, sector_tickers, period="1y"):
-    """calculate relative strength of ticker vs sector peers.
-
-    returns dict with ticker's rank, percentile, and relative performance
-    """
-    rows = fetch_ohlc(ticker, period)
-    if not rows or len(rows) < 30:
-        return None
-    closes = [r["close"] for r in rows]
-    ticker_ret = (closes[-1] - closes[0]) / closes[0] * 100
-
-    peer_returns = []
-    for peer in sector_tickers:
-        if peer == ticker:
-            continue
-        peer_rows = fetch_ohlc(peer, period)
-        if peer_rows and len(peer_rows) > 30:
-            pc = [r["close"] for r in peer_rows]
-            peer_returns.append((peer, (pc[-1] - pc[0]) / pc[0] * 100))
-
-    if not peer_returns:
-        return {"ticker": ticker, "return_pct": round(ticker_ret, 2),
-                "rank": 1, "total": 1, "percentile": 100.0}
-
-    all_returns = [(ticker, ticker_ret)] + peer_returns
-    all_returns.sort(key=lambda x: x[1], reverse=True)
-    rank = next(i + 1 for i, (t, _) in enumerate(all_returns) if t == ticker)
-    total = len(all_returns)
-    percentile = round((1 - (rank - 1) / total) * 100, 1)
-
-    return {
-        "ticker": ticker,
-        "return_pct": round(ticker_ret, 2),
-        "rank": rank,
-        "total": total,
-        "percentile": percentile,
-    }
-
-
-def rsi_divergence_score(closes, rsi_vals, lookback=20):
-    """detect price/rsi divergence as a strength signal.
-
-    bullish divergence: price makes lower low but rsi makes higher low
-    bearish divergence: price makes higher high but rsi makes lower high
-    returns score from -1 (bearish) to +1 (bullish)
-    """
-    n = min(len(closes), len(rsi_vals))
-    if n < lookback + 1:
-        return 0
-    start = n - lookback
-    recent_prices = closes[start:n]
-    recent_rsi = [r for r in rsi_vals[start:n] if r is not None]
-    if len(recent_rsi) < lookback // 2:
-        return 0
-    price_low_idx = recent_prices.index(min(recent_prices))
-    price_high_idx = recent_prices.index(max(recent_prices))
-    mid = lookback // 2
-    if price_low_idx > mid:
-        first_half_low = min(recent_prices[:mid])
-        second_half_low = min(recent_prices[mid:])
-        first_rsi_low = min(recent_rsi[:mid]) if len(recent_rsi) > mid else 50
-        second_rsi_low = min(recent_rsi[mid:]) if len(recent_rsi) > mid else 50
-        if second_half_low < first_half_low and second_rsi_low > first_rsi_low:
-            return round(min(1.0, (second_rsi_low - first_rsi_low) / 20), 4)
-    if price_high_idx > mid:
-        first_half_high = max(recent_prices[:mid])
-        second_half_high = max(recent_prices[mid:])
-        first_rsi_high = max(recent_rsi[:mid]) if len(recent_rsi) > mid else 50
-        second_rsi_high = max(recent_rsi[mid:]) if len(recent_rsi) > mid else 50
-        if second_half_high > first_half_high and second_rsi_high < first_rsi_high:
-            return round(max(-1.0, (second_rsi_high - first_rsi_high) / 20), 4)
-    return 0
 
 
 if __name__ == "__main__":
@@ -189,7 +114,7 @@ if __name__ == "__main__":
 
     top = [r for r in ranked[:10] if r["composite"] > 0 and r["rs_trend"] == "up"]
     if top:
-        print("\ntop picks (positive score + uptrend):")
+        print(f"\ntop picks (positive score + uptrend):")
         for r in top:
             print(f"  {r['ticker']:<6} score={r['composite']:+.2f}  "
                   f"${r['price']:.2f}")

@@ -4,6 +4,7 @@
 import csv
 import os
 import sys
+from datetime import datetime
 
 
 def export_to_csv(rows, filename, include_header=True):
@@ -69,20 +70,6 @@ def append_to_csv(rows, filename):
 
     print(f"appended {len(new_rows)} new rows to {filename}")
     return len(new_rows)
-
-
-def custom_columns(rows, columns):
-    """filter ohlc rows to only include specified columns.
-
-    returns new list of dicts with only the requested fields.
-    """
-    if not rows or not columns:
-        return []
-    result = []
-    for row in rows:
-        filtered = {k: row[k] for k in columns if k in row}
-        result.append(filtered)
-    return result
 
 
 if __name__ == "__main__":
