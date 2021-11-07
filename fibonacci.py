@@ -49,6 +49,19 @@ def extension_levels(swing_high, swing_low, direction="up"):
     return levels
 
 
+def extension_targets(swing_low, swing_high):
+    """calculate fibonacci extension levels from a swing.
+
+    returns dict of extension ratios to price levels:
+    1.272, 1.618, 2.0, 2.618
+    """
+    diff = swing_high - swing_low
+    targets = {}
+    for ratio in [1.272, 1.618, 2.0, 2.618]:
+        targets[f"{ratio:.3f}"] = round(swing_low + diff * ratio, 2)
+    return targets
+
+
 def auto_fib(ticker, period="6mo"):
     """automatically find swing points and calculate fib levels.
 
@@ -122,6 +135,40 @@ def support_resistance_from_fib(fib_data, tolerance=0.02):
     return zones
 
 
+def auto_swing(prices, threshold=0.05):
+    """automatically detect swing highs and lows in a price series.
+
+    a swing high is a local max where price rose and fell by at least threshold.
+    a swing low is a local min where price fell and rose by at least threshold.
+    threshold is a fraction (0.05 = 5%).
+    """
+    if len(prices) < 3:
+        return []
+    swings = []
+    direction = 0
+    last_swing_price = prices[0]
+    last_swing_idx = 0
+    for i in range(1, len(prices)):
+        if direction >= 0 and prices[i] < last_swing_price * (1 - threshold):
+            swings.append({"idx": last_swing_idx, "price": last_swing_price, "type": "high"})
+            direction = -1
+            last_swing_price = prices[i]
+            last_swing_idx = i
+        elif direction <= 0 and prices[i] > last_swing_price * (1 + threshold):
+            swings.append({"idx": last_swing_idx, "price": last_swing_price, "type": "low"})
+            direction = 1
+            last_swing_price = prices[i]
+            last_swing_idx = i
+        else:
+            if direction >= 0 and prices[i] > last_swing_price:
+                last_swing_price = prices[i]
+                last_swing_idx = i
+            elif direction <= 0 and prices[i] < last_swing_price:
+                last_swing_price = prices[i]
+                last_swing_idx = i
+    return swings
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python fibonacci.py <ticker> [period]")
@@ -140,18 +187,18 @@ if __name__ == "__main__":
     print(f"  swing low:  ${result['swing_low']:.2f} ({result['swing_low_date']})")
     print(f"  current:    ${result['current']:.2f}")
 
-    print(f"\nretracement levels:")
+    print("\nretracement levels:")
     for name, price in result["retracement"].items():
         marker = " <--" if result["nearest_fib"] and price == result["nearest_fib"][1] else ""
         print(f"  {name}  ${price:.2f}{marker}")
 
-    print(f"\nextension levels:")
+    print("\nextension levels:")
     for name, price in result["extensions"].items():
         print(f"  {name}  ${price:.2f}")
 
     zones = support_resistance_from_fib(result)
     if zones:
-        print(f"\nnearby s/r zones:")
+        print("\nnearby s/r zones:")
         for z in zones:
             print(f"  {z['role']:<11} ${z['price']:.2f} "
                   f"(fib {z['level']}, {z['distance_pct']:+.2f}%)")
