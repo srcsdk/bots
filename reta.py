@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """reta: short squeeze detection and alerts"""
 
-import json
-import re
 import sys
 from html.parser import HTMLParser
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
 from ohlc import fetch_ohlc
-from indicators import (
-    sma, ema, rsi, macd, bollinger_bands, volume_sma, atr
-)
+from indicators import rsi, macd, bollinger_bands, volume_sma
 
 
 class FinvizParser(HTMLParser):
@@ -153,8 +149,6 @@ def score_squeeze_potential(ticker, rows, finviz_data):
     """
     closes = [r["close"] for r in rows]
     volumes = [r["volume"] for r in rows]
-    highs = [r["high"] for r in rows]
-    lows = [r["low"] for r in rows]
 
     score = 0
     breakdown = {}
@@ -278,7 +272,6 @@ def find_exit_signals(rows):
     price making new highs while rsi/macd diverge downward.
     """
     closes = [r["close"] for r in rows]
-    highs = [r["high"] for r in rows]
 
     rsi_vals = rsi(closes, 14)
     macd_line, signal_line, hist = macd(closes)
@@ -315,6 +308,32 @@ def find_exit_signals(rows):
     return signals
 
 
+def float_turnover(ticker, period="6mo"):
+    """estimate float turnover ratio from volume vs estimated float.
+
+    uses avg daily volume * trading days / market cap proxy as a rough
+    estimate of how many times the float has turned over.
+    """
+    rows = fetch_ohlc(ticker, period)
+    if not rows or len(rows) < 20:
+        return None
+    volumes = [r["volume"] for r in rows]
+    closes = [r["close"] for r in rows]
+    avg_vol = sum(volumes) / len(volumes)
+    total_volume = sum(volumes)
+    market_cap_proxy = closes[-1] * avg_vol * 20
+    if market_cap_proxy <= 0:
+        return None
+    turnover = total_volume / market_cap_proxy
+    return {
+        "ticker": ticker,
+        "avg_daily_volume": round(avg_vol, 0),
+        "total_volume": total_volume,
+        "trading_days": len(rows),
+        "turnover_ratio": round(turnover, 4),
+    }
+
+
 def analyze_ticker(ticker, period="6mo"):
     """full squeeze analysis for a single ticker"""
     print(f"\n{'=' * 50}")
@@ -329,13 +348,13 @@ def analyze_ticker(ticker, period="6mo"):
     print(f"  data: {rows[0]['date']} to {rows[-1]['date']} ({len(rows)} bars)")
     print(f"  last close: ${rows[-1]['close']:.2f}")
 
-    print(f"  fetching short interest data...")
+    print("  fetching short interest data...")
     finviz_data = fetch_finviz_stats(ticker)
 
     total_score, breakdown = score_squeeze_potential(ticker, rows, finviz_data)
 
     print(f"\n  squeeze score: {total_score}/100")
-    print(f"  breakdown:")
+    print("  breakdown:")
     for factor, (val, pts) in breakdown.items():
         if val is not None:
             print(f"    {factor:<20} value={val:<10} pts={pts}")
@@ -353,7 +372,7 @@ def analyze_ticker(ticker, period="6mo"):
                   f"vol={s['vol_ratio']}x rsi={s['rsi']:.1f} "
                   f"hist={s['macd_hist']:.4f}")
     else:
-        print(f"\n  no entry signals found")
+        print("\n  no entry signals found")
 
     if exits:
         recent_exits = exits[-5:]
@@ -363,7 +382,7 @@ def analyze_ticker(ticker, period="6mo"):
                   f"rsi={s['rsi']:.1f} hist={s['macd_hist']:.4f} "
                   f"[{s['divergence']}]")
     else:
-        print(f"\n  no exit signals found")
+        print("\n  no exit signals found")
 
     verdict = "neutral"
     if total_score >= 70:
@@ -392,6 +411,31 @@ def analyze_ticker(ticker, period="6mo"):
     }
 
 
+def days_on_threshold(ticker, period="1y", threshold_pct=150):
+    """count days where short interest ratio exceeds threshold.
+
+    uses volume-based short interest proxy since actual SI data
+    requires paid feeds. threshold_pct is relative to average volume.
+    """
+    rows = fetch_ohlc(ticker, period)
+    if not rows or len(rows) < 20:
+        return {"ticker": ticker, "days_above": 0, "total_days": 0, "pct": 0}
+    volumes = [r["volume"] for r in rows if r.get("volume", 0) > 0]
+    if not volumes:
+        return {"ticker": ticker, "days_above": 0, "total_days": 0, "pct": 0}
+    avg_vol = sum(volumes) / len(volumes)
+    threshold = avg_vol * (threshold_pct / 100)
+    days_above = sum(1 for v in volumes if v >= threshold)
+    return {
+        "ticker": ticker,
+        "days_above": days_above,
+        "total_days": len(volumes),
+        "pct": round(days_above / len(volumes) * 100, 1),
+        "avg_volume": int(avg_vol),
+        "threshold": int(threshold),
+    }
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python reta.py <ticker> [ticker2] [ticker3] ...")
@@ -409,7 +453,7 @@ if __name__ == "__main__":
 
     if len(results) > 1:
         print(f"\n{'=' * 50}")
-        print(f"  summary (ranked by squeeze score)")
+        print("  summary (ranked by squeeze score)")
         print(f"{'=' * 50}")
         results.sort(key=lambda r: r["score"], reverse=True)
         for r in results:

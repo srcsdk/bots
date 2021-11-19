@@ -133,7 +133,7 @@ def score_indicators_at(idx, closes, opens, highs, lows, volumes):
             and ind["macd_line"][idx - 1] is not None
             and ind["macd_signal"][idx - 1] is not None):
         crossed = (ind["macd_line"][idx] > ind["macd_signal"][idx]
-                    and ind["macd_line"][idx - 1] <= ind["macd_signal"][idx - 1])
+                   and ind["macd_line"][idx - 1] <= ind["macd_signal"][idx - 1])
         scores["macd_cross_up"] = 1.0 if crossed else 0
 
     if ind["vol_sma"][idx] is not None and ind["vol_sma"][idx] > 0:
@@ -266,7 +266,7 @@ def print_analysis(result):
         print(f"  {name:<20s} {score:.2f} {bar}{marker}")
 
     print(f"\ntotal score: {result['total_score']:.2f}")
-    print(f"pattern (* = score >= 0.3):")
+    print("pattern (* = score >= 0.3):")
     for name, score in sorted(result["pattern"].items(), key=lambda x: -x[1]):
         print(f"  {name}: {score:.2f}")
 
@@ -282,6 +282,42 @@ def print_scan(results):
         matched_names = ", ".join(r["matched"].keys())
         print(f"  {r['ticker']:<6} ${r['price']:>7.2f} {r['match_pct']:>5.1f}% "
               f"{r['date']:<12} {matched_names}")
+
+
+def add_fundamental_stub(ticker):
+    """return a dict with placeholder fundamental metrics for future api integration"""
+    return {
+        "ticker": ticker,
+        "pe_ratio": None,
+        "forward_pe": None,
+        "revenue_growth": None,
+        "earnings_growth": None,
+        "debt_to_equity": None,
+        "profit_margin": None,
+        "roe": None,
+        "free_cash_flow": None,
+        "dividend_yield": None,
+        "market_cap": None,
+    }
+
+
+def compare_patterns(pattern_a, pattern_b):
+    """cosine similarity between two insider pattern dicts.
+
+    patterns are dicts with numeric values (e.g. buy_count, sell_count).
+    returns similarity score from 0 to 1.
+    """
+    all_keys = set(list(pattern_a.keys()) + list(pattern_b.keys()))
+    if not all_keys:
+        return 0.0
+    vec_a = [pattern_a.get(k, 0) for k in all_keys]
+    vec_b = [pattern_b.get(k, 0) for k in all_keys]
+    dot = sum(a * b for a, b in zip(vec_a, vec_b))
+    mag_a = sum(a * a for a in vec_a) ** 0.5
+    mag_b = sum(b * b for b in vec_b) ** 0.5
+    if mag_a == 0 or mag_b == 0:
+        return 0.0
+    return round(dot / (mag_a * mag_b), 4)
 
 
 if __name__ == "__main__":

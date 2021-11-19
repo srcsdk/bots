@@ -121,6 +121,68 @@ def rank_strategies(tickers, period="2y"):
     return ranked
 
 
+def correlation_matrix(tickers, period="1y"):
+    """build a correlation matrix from price returns of multiple tickers.
+
+    returns (matrix, valid_tickers) where matrix[i][j] is pearson
+    correlation between tickers i and j
+    """
+    from correlation import daily_returns, pearson_correlation
+    from ohlc import fetch_ohlc
+
+    returns_data = {}
+    valid = []
+    for ticker in tickers:
+        rows = fetch_ohlc(ticker, period)
+        if rows and len(rows) > 30:
+            closes = [r["close"] for r in rows]
+            returns_data[ticker] = daily_returns(closes)
+            valid.append(ticker)
+
+    n = len(valid)
+    matrix = [[0.0] * n for _ in range(n)]
+    for i in range(n):
+        matrix[i][i] = 1.0
+        for j in range(i + 1, n):
+            corr = pearson_correlation(returns_data[valid[i]], returns_data[valid[j]])
+            matrix[i][j] = corr
+            matrix[j][i] = corr
+
+    return matrix, valid
+
+
+def strategy_consistency(results, min_trades=10):
+    """measure strategy consistency across different tickers.
+
+    results: dict of {ticker: backtest_stats}
+    returns consistency metrics like win rate std dev and return stability
+    """
+    win_rates = []
+    returns = []
+    for ticker, stats in results.items():
+        trades = stats.get("trades", 0)
+        if trades < min_trades:
+            continue
+        wr = stats.get("win_rate", 0)
+        avg_r = stats.get("avg_return", 0)
+        win_rates.append(wr)
+        returns.append(avg_r)
+    if len(win_rates) < 2:
+        return {"consistent": False, "samples": len(win_rates)}
+    wr_mean = sum(win_rates) / len(win_rates)
+    wr_std = (sum((w - wr_mean) ** 2 for w in win_rates) / len(win_rates)) ** 0.5
+    ret_mean = sum(returns) / len(returns)
+    ret_std = (sum((r - ret_mean) ** 2 for r in returns) / len(returns)) ** 0.5
+    return {
+        "consistent": wr_std < 15,
+        "samples": len(win_rates),
+        "win_rate_mean": round(wr_mean, 2),
+        "win_rate_std": round(wr_std, 2),
+        "return_mean": round(ret_mean, 2),
+        "return_std": round(ret_std, 2),
+    }
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage:")
