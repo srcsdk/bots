@@ -4,6 +4,7 @@
 import json
 import sys
 from indicators import sharpe_ratio, max_drawdown
+from correlation import daily_returns
 
 
 def equity_curve(trades, initial=10000):
@@ -68,7 +69,7 @@ def monthly_returns(curve):
         month = point["date"][:7]
         if month not in months:
             months[month] = {"start": point["equity"] - point.get("pnl", 0),
-                             "end": point["equity"]}
+                            "end": point["equity"]}
         else:
             months[month]["end"] = point["equity"]
 
@@ -157,25 +158,6 @@ def format_report(report):
     lines.append(f"  calmar:         {report['calmar_ratio']}")
     lines.append(f"  max drawdown:   {report['max_drawdown_pct']}%")
     return "\n".join(lines)
-
-
-def profit_factor(trades):
-    """calculate profit factor: gross profits / gross losses.
-
-    trades: list of dicts with 'pnl' or 'pnl_pct' key
-    returns float, > 1.0 means profitable system
-    """
-    gross_profit = 0
-    gross_loss = 0
-    for t in trades:
-        pnl = t.get("pnl", t.get("pnl_pct", 0))
-        if pnl > 0:
-            gross_profit += pnl
-        elif pnl < 0:
-            gross_loss += abs(pnl)
-    if gross_loss == 0:
-        return float("inf") if gross_profit > 0 else 0
-    return round(gross_profit / gross_loss, 4)
 
 
 if __name__ == "__main__":
