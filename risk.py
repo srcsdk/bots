@@ -3,7 +3,6 @@
 
 import sys
 from ohlc import fetch_ohlc
-from indicators import atr
 
 
 def fixed_stop(entry, stop_pct=0.05):
@@ -64,8 +63,6 @@ def simulate_exit(rows, entry_idx, stop, target, max_hold=30):
     for i in range(entry_idx + 1, min(len(rows), entry_idx + max_hold + 1)):
         low = rows[i]["low"]
         high = rows[i]["high"]
-        close = rows[i]["close"]
-
         if low <= stop:
             return i, stop, "stop_loss"
         if high >= target:
@@ -122,6 +119,24 @@ def backtest_with_risk(ticker, signals, stop_pct=0.05, target_pct=0.10,
     return trades
 
 
+def max_consecutive_losses(trades):
+    """count the longest streak of losing trades.
+
+    a losing trade has pnl_pct <= 0.
+    """
+    if not trades:
+        return 0
+    max_streak = 0
+    current = 0
+    for t in trades:
+        if t.get("pnl_pct", 0) <= 0:
+            current += 1
+            max_streak = max(max_streak, current)
+        else:
+            current = 0
+    return max_streak
+
+
 def summarize_trades(trades):
     """generate summary statistics from trade results"""
     if not trades:
@@ -149,6 +164,24 @@ def summarize_trades(trades):
             (len(wins) / len(trades) * avg_win +
              len(losses) / len(trades) * avg_loss), 2
         ),
+    }
+
+
+def position_risk(entry, stop, shares):
+    """calculate dollar risk for a position.
+
+    returns dict with risk per share, total risk, and risk percentage
+    """
+    if entry <= 0 or shares <= 0:
+        return {"risk_per_share": 0, "total_risk": 0, "risk_pct": 0}
+    risk_per_share = abs(entry - stop)
+    total_risk = risk_per_share * shares
+    risk_pct = risk_per_share / entry * 100
+    return {
+        "risk_per_share": round(risk_per_share, 2),
+        "total_risk": round(total_risk, 2),
+        "risk_pct": round(risk_pct, 2),
+        "position_value": round(entry * shares, 2),
     }
 
 
