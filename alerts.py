@@ -10,15 +10,6 @@ from indicators import rsi, macd, sma, bollinger_bands
 
 
 ALERTS_FILE = os.path.join(os.path.dirname(__file__), "alerts.json")
-ALERT_LOG_FILE = os.path.join(os.path.dirname(__file__), "alert_log.json")
-
-
-def load_alert_log():
-    """load alert fire history from log file"""
-    if os.path.exists(ALERT_LOG_FILE):
-        with open(ALERT_LOG_FILE, "r") as f:
-            return json.load(f)
-    return []
 
 
 def load_alerts():
@@ -112,47 +103,6 @@ def evaluate_alert(alert, rows):
     return check_condition(current, previous, target, comp)
 
 
-def export_alerts_json(alerts, filepath):
-    """write alert history to a json file.
-
-    exports all alerts including triggered and inactive ones.
-    """
-    with open(filepath, "w") as f:
-        json.dump(alerts, f, indent=2)
-    return len(alerts)
-
-
-def ma_crossover_alert(ticker, fast=10, slow=30):
-    """check for moving average crossover conditions.
-
-    returns dict with crossover type if detected, none otherwise.
-    """
-    rows = fetch_ohlc(ticker, "3mo")
-    if not rows or len(rows) < slow + 2:
-        return None
-
-    closes = [r["close"] for r in rows]
-    fast_ma = sma(closes, fast)
-    slow_ma = sma(closes, slow)
-
-    curr_fast = fast_ma[-1]
-    curr_slow = slow_ma[-1]
-    prev_fast = fast_ma[-2]
-    prev_slow = slow_ma[-2]
-
-    if any(v is None for v in [curr_fast, curr_slow, prev_fast, prev_slow]):
-        return None
-
-    if prev_fast <= prev_slow and curr_fast > curr_slow:
-        return {"ticker": ticker, "type": "golden_cross",
-                "fast": fast, "slow": slow, "date": rows[-1]["date"]}
-    elif prev_fast >= prev_slow and curr_fast < curr_slow:
-        return {"ticker": ticker, "type": "death_cross",
-                "fast": fast, "slow": slow, "date": rows[-1]["date"]}
-
-    return None
-
-
 def check_alerts():
     """check all active alerts and return triggered ones"""
     alerts = load_alerts()
@@ -182,25 +132,6 @@ def monitor(interval=300):
         active = [a for a in load_alerts() if a["active"]]
         print(f"  {len(active)} active alerts, {len(triggered)} triggered")
         time.sleep(interval)
-
-
-def alert_cooldown(ticker, alert_type, cooldown_mins=60):
-    """check if an alert is in cooldown period to prevent duplicates.
-
-    reads recent alerts from log and returns True if safe to fire.
-    """
-    log = load_alert_log()
-    now = time.time()
-    cooldown_secs = cooldown_mins * 60
-    for entry in reversed(log):
-        if entry.get("ticker") != ticker:
-            continue
-        if entry.get("type") != alert_type:
-            continue
-        fired_at = entry.get("timestamp", 0)
-        if now - fired_at < cooldown_secs:
-            return False
-    return True
 
 
 if __name__ == "__main__":
