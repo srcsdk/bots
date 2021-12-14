@@ -63,6 +63,26 @@ def get_active_tickers():
     return data["lists"].get(active, [])
 
 
+def auto_refresh(watchlist, interval=300):
+    """return a refresh schedule dict with last_updated timestamps.
+
+    sets up a schedule for periodic watchlist data refresh.
+    interval is in seconds (default 5 minutes).
+    """
+    import time
+    now = time.time()
+    tickers = watchlist.get("lists", {}).get(
+        watchlist.get("active", "default"), []
+    )
+    schedule = {
+        "interval": interval,
+        "last_updated": now,
+        "next_update": now + interval,
+        "tickers": {t: {"last_updated": None} for t in tickers},
+    }
+    return schedule
+
+
 def quick_snapshot(tickers):
     """get a quick snapshot of current indicators for tickers"""
     results = []
@@ -104,6 +124,30 @@ def watchlist_report(list_name="default"):
     if not tickers:
         return None
     return quick_snapshot(tickers)
+
+
+def sort_by_signal(watchlist_items):
+    """sort watchlist items by signal strength.
+
+    items with rsi < 30 or > 70 score higher, macd histogram magnitude adds weight.
+    returns sorted list with signal_strength field added.
+    """
+    scored = []
+    for item in watchlist_items:
+        strength = 0
+        rsi_val = item.get("rsi")
+        if rsi_val is not None:
+            if rsi_val < 30:
+                strength += (30 - rsi_val) / 30
+            elif rsi_val > 70:
+                strength += (rsi_val - 70) / 30
+        macd_hist = item.get("macd_hist")
+        if macd_hist is not None:
+            strength += min(abs(macd_hist) * 100, 1.0)
+        item["signal_strength"] = round(strength, 4)
+        scored.append(item)
+    scored.sort(key=lambda x: x["signal_strength"], reverse=True)
+    return scored
 
 
 if __name__ == "__main__":

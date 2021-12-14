@@ -4,13 +4,12 @@
 import argparse
 import sys
 
-import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.patches import Rectangle
 
 from ohlc import fetch_ohlc
-from indicators import sma, ema, rsi, macd, bollinger_bands, volume_sma
+from indicators import sma, rsi, macd, bollinger_bands, volume_sma
 
 
 STRATEGY_MODULES = {
@@ -51,6 +50,41 @@ def run_strategy(name, ticker, period):
         return []
 
 
+def add_stop_levels(chart_data, stop_type, atr_mult=2.0):
+    """calculate stop loss and take profit levels for display.
+
+    stop_type: 'fixed' for percentage-based, 'atr' for atr-based
+    returns dict with stop_loss and take_profit price levels
+    """
+    if not chart_data:
+        return {"stop_loss": None, "take_profit": None}
+
+    closes = [r["close"] for r in chart_data]
+    entry = closes[-1]
+
+    if stop_type == "atr" and len(chart_data) >= 14:
+        highs = [r["high"] for r in chart_data]
+        lows = [r["low"] for r in chart_data]
+        true_ranges = [highs[0] - lows[0]]
+        for i in range(1, len(closes)):
+            tr = max(highs[i] - lows[i],
+                     abs(highs[i] - closes[i - 1]),
+                     abs(lows[i] - closes[i - 1]))
+            true_ranges.append(tr)
+        atr_val = sum(true_ranges[-14:]) / 14
+        stop_loss = round(entry - atr_val * atr_mult, 2)
+        take_profit = round(entry + atr_val * atr_mult * 1.5, 2)
+    else:
+        stop_loss = round(entry * 0.95, 2)
+        take_profit = round(entry * 1.10, 2)
+
+    return {
+        "entry": entry,
+        "stop_loss": stop_loss,
+        "take_profit": take_profit,
+    }
+
+
 def draw_candlesticks(ax, rows):
     """draw candlestick bars using matplotlib rectangles"""
     for i, row in enumerate(rows):
@@ -63,14 +97,12 @@ def draw_candlesticks(ax, rows):
 
         ax.plot([i, i], [l, h], color=color, linewidth=0.7)
         rect = Rectangle((i - 0.35, body_bottom), 0.7, body_height,
-                          facecolor=color, edgecolor=color, linewidth=0.5)
+                         facecolor=color, edgecolor=color, linewidth=0.5)
         ax.add_patch(rect)
 
 
 def draw_overlays(ax, closes, dates):
     """draw sma lines and bollinger bands on the price chart"""
-    x = list(range(len(closes)))
-
     sma_20 = sma(closes, 20)
     sma_50 = sma(closes, 50)
     bb_mid, bb_upper, bb_lower = bollinger_bands(closes, 20, 2)
@@ -160,7 +192,6 @@ def draw_signals(ax, rows, signals):
         if date not in date_to_idx:
             continue
         idx = date_to_idx[date]
-        price = sig.get("price", rows[idx]["close"])
         sig_type = sig.get("type", "buy")
 
         if sig_type in ("exit", "sell"):
