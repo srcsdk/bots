@@ -104,36 +104,6 @@ if __name__ == "__main__":
     print(f"\n{len(rows)} rows ({rows[0]['date']} to {rows[-1]['date']})")
 
 
-_fetch_cache = {}
-
-
-def cached_fetch(ticker, period, ttl=3600):
-    """fetch ohlc data with in-memory cache and ttl expiry.
-
-    caches results keyed by ticker+period, expires after ttl seconds.
-    """
-    key = f"{ticker}_{period}"
-    now = time.time()
-    if key in _fetch_cache:
-        cached_time, cached_data = _fetch_cache[key]
-        if now - cached_time < ttl:
-            return cached_data
-    rows = fetch_ohlc(ticker, period)
-    if rows:
-        _fetch_cache[key] = (now, rows)
-    return rows
-
-
-def fetch_intraday(ticker, interval="5m"):
-    """fetch intraday ohlc data.
-
-    placeholder for future intraday data implementation.
-    currently returns empty list.
-    """
-    # todo: implement intraday data fetching
-    return []
-
-
 def cache_path(ticker, period, interval):
     """get cache file path for a ticker"""
     cache_dir = os.path.join(os.path.dirname(__file__), ".cache")

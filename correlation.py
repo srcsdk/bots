@@ -88,60 +88,6 @@ def find_uncorrelated(matrix, tickers, threshold=0.3):
     return pairs
 
 
-def rolling_correlation_regime(series_a, series_b, window=60):
-    """detect correlation regime changes between two return series.
-
-    computes rolling correlation and flags regime shifts where
-    correlation moves significantly from its recent average.
-    returns list of (index, correlation, regime) tuples
-    """
-    n = min(len(series_a), len(series_b))
-    if n < window:
-        return []
-    a = series_a[:n]
-    b = series_b[:n]
-    results = []
-    rolling_corrs = []
-    for i in range(window - 1, n):
-        chunk_a = a[i - window + 1:i + 1]
-        chunk_b = b[i - window + 1:i + 1]
-        corr = pearson_correlation(chunk_a, chunk_b)
-        rolling_corrs.append(corr)
-
-        if len(rolling_corrs) >= 10:
-            recent_avg = sum(rolling_corrs[-10:]) / 10
-            if corr > recent_avg + 0.2:
-                regime = "converging"
-            elif corr < recent_avg - 0.2:
-                regime = "diverging"
-            else:
-                regime = "stable"
-        else:
-            regime = "stable"
-
-        results.append((i, corr, regime))
-    return results
-
-
-def beta(asset_returns, market_returns):
-    """calculate beta of asset relative to market.
-
-    beta = covariance(asset, market) / variance(market)
-    """
-    n = min(len(asset_returns), len(market_returns))
-    if n < 2:
-        return 0
-    a = asset_returns[:n]
-    m = market_returns[:n]
-    mean_a = sum(a) / n
-    mean_m = sum(m) / n
-    cov = sum((a[i] - mean_a) * (m[i] - mean_m) for i in range(n)) / n
-    var_m = sum((m[i] - mean_m) ** 2 for i in range(n)) / n
-    if var_m == 0:
-        return 0
-    return round(cov / var_m, 4)
-
-
 def format_matrix(matrix, tickers):
     """format correlation matrix as aligned text"""
     col_width = 8

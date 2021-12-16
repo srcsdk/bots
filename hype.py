@@ -341,28 +341,6 @@ def print_results(ticker_data, hype_cycles, filter_ticker=None):
             print("  hype cycle: none detected")
 
 
-def correlate_trends(social_signals, price_data):
-    """calculate correlation between social mention frequency and price movement.
-
-    social_signals: list of mention counts per period
-    price_data: list of price changes per period (same length)
-    returns pearson correlation coefficient
-    """
-    n = min(len(social_signals), len(price_data))
-    if n < 3:
-        return 0.0
-    ss = social_signals[:n]
-    pp = price_data[:n]
-    mean_s = sum(ss) / n
-    mean_p = sum(pp) / n
-    cov = sum((ss[i] - mean_s) * (pp[i] - mean_p) for i in range(n)) / n
-    std_s = (sum((s - mean_s) ** 2 for s in ss) / n) ** 0.5
-    std_p = (sum((p - mean_p) ** 2 for p in pp) / n) ** 0.5
-    if std_s == 0 or std_p == 0:
-        return 0.0
-    return round(cov / (std_s * std_p), 4)
-
-
 def parse_args():
     """parse command line arguments."""
     parser = argparse.ArgumentParser(
@@ -389,26 +367,6 @@ def parse_args():
         help="hype cycle detection window in hours (default: 6)",
     )
     return parser.parse_args()
-
-
-def platform_weight(platform):
-    """return engagement weight multiplier by platform name.
-
-    different platforms have different signal quality for stock sentiment.
-    returns float weight (higher = more significant)
-    """
-    weights = {
-        "reddit": 1.0,
-        "twitter": 0.8,
-        "stocktwits": 1.2,
-        "discord": 0.6,
-        "youtube": 0.5,
-        "tiktok": 0.3,
-        "facebook": 0.4,
-        "telegram": 0.7,
-        "4chan": 0.2,
-    }
-    return weights.get(platform.lower(), 0.5)
 
 
 def main():

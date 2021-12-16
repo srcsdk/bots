@@ -205,15 +205,6 @@ def composite_signal(mobr_score, greeks_score, market_score):
     return signal, composite
 
 
-def normalize_composite(score, min_score=0, max_score=100):
-    """clamp and scale composite score to a 0-100 range"""
-    clamped = max(min_score, min(max_score, score))
-    if max_score == min_score:
-        return 0
-    normalized = (clamped - min_score) / (max_score - min_score) * 100
-    return round(normalized, 1)
-
-
 def run_moop(ticker, option_type, strike, expiry_str, rate=0.05):
     """run the full moop analysis for a given options contract.
 

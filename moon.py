@@ -255,36 +255,6 @@ def format_report(results):
     return "\n".join(lines)
 
 
-def social_momentum_decay(signals, half_life=5):
-    """apply exponential decay weighting to older social signals.
-
-    signals: list of dicts with numeric values to weight
-    half_life: number of periods for signal to lose half its weight
-    returns list of weighted signal values
-    """
-    import math
-    decay_rate = math.log(2) / half_life
-    n = len(signals)
-    weighted = []
-    for i, sig in enumerate(signals):
-        age = n - 1 - i
-        weight = math.exp(-decay_rate * age)
-        if isinstance(sig, dict):
-            w_sig = {}
-            for k, v in sig.items():
-                if isinstance(v, (int, float)):
-                    w_sig[k] = round(v * weight, 4)
-                else:
-                    w_sig[k] = v
-            w_sig["decay_weight"] = round(weight, 4)
-            weighted.append(w_sig)
-        elif isinstance(sig, (int, float)):
-            weighted.append(round(sig * weight, 4))
-        else:
-            weighted.append(sig)
-    return weighted
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python moon.py <ticker> [ticker2] [ticker3] ...")

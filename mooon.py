@@ -388,22 +388,6 @@ def format_report(result):
     return "\n".join(lines)
 
 
-def risk_adjusted_size(signal_strength, portfolio_value, max_risk_pct=0.02):
-    """calculate position size based on signal confidence and risk budget.
-
-    signal_strength: float 0-1 representing confidence
-    portfolio_value: total portfolio value in dollars
-    max_risk_pct: maximum fraction of portfolio to risk per trade
-    returns dollar amount to allocate
-    """
-    if signal_strength <= 0 or portfolio_value <= 0:
-        return 0
-    clamped = min(1.0, max(0.0, signal_strength))
-    risk_budget = portfolio_value * max_risk_pct
-    allocation = round(risk_budget * clamped, 2)
-    return allocation
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("usage: python mooon.py <ticker> <expiry>")
