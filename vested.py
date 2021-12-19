@@ -284,6 +284,42 @@ def print_scan(results):
               f"{r['date']:<12} {matched_names}")
 
 
+def add_fundamental_stub(ticker):
+    """return a dict with placeholder fundamental metrics for future api integration"""
+    return {
+        "ticker": ticker,
+        "pe_ratio": None,
+        "forward_pe": None,
+        "revenue_growth": None,
+        "earnings_growth": None,
+        "debt_to_equity": None,
+        "profit_margin": None,
+        "roe": None,
+        "free_cash_flow": None,
+        "dividend_yield": None,
+        "market_cap": None,
+    }
+
+
+def compare_patterns(pattern_a, pattern_b):
+    """cosine similarity between two insider pattern dicts.
+
+    patterns are dicts with numeric values (e.g. buy_count, sell_count).
+    returns similarity score from 0 to 1.
+    """
+    all_keys = set(list(pattern_a.keys()) + list(pattern_b.keys()))
+    if not all_keys:
+        return 0.0
+    vec_a = [pattern_a.get(k, 0) for k in all_keys]
+    vec_b = [pattern_b.get(k, 0) for k in all_keys]
+    dot = sum(a * b for a, b in zip(vec_a, vec_b))
+    mag_a = sum(a * a for a in vec_a) ** 0.5
+    mag_b = sum(b * b for b in vec_b) ** 0.5
+    if mag_a == 0 or mag_b == 0:
+        return 0.0
+    return round(dot / (mag_a * mag_b), 4)
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python vested.py <ticker>           (analyze)")

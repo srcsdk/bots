@@ -104,6 +104,22 @@ def cloud_signal(closes, cloud):
     return signals
 
 
+def cloud_thickness(senkou_a, senkou_b):
+    """calculate cloud thickness as a volatility signal.
+
+    thicker cloud = stronger support/resistance zone.
+    returns list of thickness values (absolute difference).
+    """
+    n = min(len(senkou_a), len(senkou_b))
+    result = []
+    for i in range(n):
+        if senkou_a[i] is not None and senkou_b[i] is not None:
+            result.append(round(abs(senkou_a[i] - senkou_b[i]), 2))
+        else:
+            result.append(None)
+    return result
+
+
 def scan(ticker, period="1y"):
     """scan ticker for ichimoku signals"""
     rows = fetch_ohlc(ticker, period)
@@ -121,6 +137,30 @@ def scan(ticker, period="1y"):
         sig["date"] = rows[sig["idx"]]["date"]
 
     return signals
+
+
+def kumo_twist(senkou_a, senkou_b):
+    """detect cloud (kumo) twists where senkou a and b cross.
+
+    bullish twist: senkou_a crosses above senkou_b
+    bearish twist: senkou_a crosses below senkou_b
+    returns list of twist events with index and direction
+    """
+    twists = []
+    for i in range(1, min(len(senkou_a), len(senkou_b))):
+        if senkou_a[i] is None or senkou_b[i] is None:
+            continue
+        if senkou_a[i - 1] is None or senkou_b[i - 1] is None:
+            continue
+        prev_diff = senkou_a[i - 1] - senkou_b[i - 1]
+        curr_diff = senkou_a[i] - senkou_b[i]
+        if prev_diff <= 0 and curr_diff > 0:
+            twists.append({"idx": i, "direction": "bullish",
+                          "senkou_a": senkou_a[i], "senkou_b": senkou_b[i]})
+        elif prev_diff >= 0 and curr_diff < 0:
+            twists.append({"idx": i, "direction": "bearish",
+                          "senkou_a": senkou_a[i], "senkou_b": senkou_b[i]})
+    return twists
 
 
 if __name__ == "__main__":

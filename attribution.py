@@ -53,16 +53,15 @@ def best_worst_periods(trades, period_length=20):
     sorted_trades = sorted(trades, key=lambda t: t.get("date", ""))
     best_pnl = float("-inf")
     worst_pnl = float("inf")
-    best_start = worst_start = 0
     for i in range(len(sorted_trades) - period_length + 1):
         window = sorted_trades[i:i + period_length]
         pnl = sum(t["pnl"] for t in window)
         if pnl > best_pnl:
             best_pnl = pnl
-            best_start = i
+
         if pnl < worst_pnl:
             worst_pnl = pnl
-            worst_start = i
+
     return {
         "best_period_pnl": round(best_pnl, 2),
         "worst_period_pnl": round(worst_pnl, 2),
@@ -77,7 +76,7 @@ if __name__ == "__main__":
         trades.append({
             "strategy": random.choice(strategies),
             "pnl": random.gauss(50, 200),
-            "date": f"2021-{random.randint(1,12):02d}-{random.randint(1,28):02d}",
+            "date": f"2021-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
         })
     results = strategy_pnl(trades)
     total = sum(r["total_pnl"] for r in results.values())

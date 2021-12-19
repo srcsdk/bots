@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """options spread strategy with risk/reward profiling"""
 
-import math
-
 
 def vertical_spread(long_strike, short_strike, long_premium, short_premium,
                     option_type="call"):

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """kaufman adaptive moving average (kama)"""
 
-import math
-
 
 def efficiency_ratio(prices, period=10):
     """calculate kaufman efficiency ratio.

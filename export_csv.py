@@ -71,6 +71,20 @@ def append_to_csv(rows, filename):
     return len(new_rows)
 
 
+def custom_columns(rows, columns):
+    """filter ohlc rows to only include specified columns.
+
+    returns new list of dicts with only the requested fields.
+    """
+    if not rows or not columns:
+        return []
+    result = []
+    for row in rows:
+        filtered = {k: row[k] for k in columns if k in row}
+        result.append(filtered)
+    return result
+
+
 if __name__ == "__main__":
     from ohlc import fetch_ohlc
 

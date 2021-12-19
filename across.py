@@ -50,6 +50,17 @@ def scan(ticker, period="1y"):
     return signals
 
 
+def score_signal_strength(signal, closes, idx):
+    """weight signal by rsi distance from threshold + macd histogram magnitude"""
+    rsi_val = signal.get("rsi", 50)
+    macd_val = signal.get("macd", 0)
+
+    rsi_distance = max(0, 30 - rsi_val) / 30.0
+    macd_magnitude = min(abs(macd_val), 1.0)
+    score = round(rsi_distance * 0.6 + macd_magnitude * 0.4, 4)
+    return score
+
+
 def scan_nolo(ticker, period="1y"):
     """nolo: across but within 30% of 52wk low"""
     rows = fetch_ohlc(ticker, period)

@@ -367,6 +367,31 @@ def print_report(result):
               f"  score: {ev.get('score', 0)}/{ev.get('max_score', 0)}")
 
 
+def portfolio_heat(results):
+    """summarize mooop results by signal strength level.
+
+    results: list of analyze_ticker result dicts
+    returns dict with counts and tickers grouped by signal level
+    """
+    heat = {
+        "strong_buy": [],
+        "buy": [],
+        "watch": [],
+        "pass": [],
+    }
+    for r in results:
+        signal = r["composite"]["signal"]
+        entry = {"ticker": r["ticker"], "composite": r["composite"]["composite"]}
+        if signal in heat:
+            heat[signal].append(entry)
+        else:
+            heat["pass"].append(entry)
+    summary = {}
+    for level, entries in heat.items():
+        summary[level] = {"count": len(entries), "tickers": entries}
+    return summary
+
+
 def main():
     if len(sys.argv) < 2:
         print("usage: python mooop.py TICKER [TICKER ...]")

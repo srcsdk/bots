@@ -24,6 +24,16 @@ def load_watchlist(filename=None):
     return WATCHLIST_DEFAULT
 
 
+def custom_strategy_list(strategy_names):
+    """validate and filter available strategies for scanning.
+
+    returns list of valid strategy names from the input list.
+    """
+    available = {"gapup", "bcross", "movo", "nobr", "mobr"}
+    valid = [s for s in strategy_names if s in available]
+    return valid
+
+
 def scan_all(tickers, strategy_name, period="1y"):
     """run a strategy across all tickers.
 
@@ -98,6 +108,26 @@ def consensus_picks(multi_results, min_strategies=2):
 
     consensus.sort(key=lambda c: c["count"], reverse=True)
     return consensus
+
+
+def parallel_scan_stub(tickers, strategy, period="1y"):
+    """placeholder for concurrent ticker scanning.
+
+    wraps sequential scanning with the same interface that a
+    threaded or multiprocessing version would use.
+    returns list of (ticker, signals) tuples
+    """
+    results = []
+    for ticker in tickers:
+        try:
+            mod = __import__(strategy)
+            if hasattr(mod, "scan"):
+                signals = mod.scan(ticker, period)
+                if signals:
+                    results.append((ticker, signals))
+        except (ImportError, AttributeError):
+            continue
+    return results
 
 
 if __name__ == "__main__":

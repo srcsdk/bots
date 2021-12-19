@@ -352,6 +352,29 @@ def macro_adjustment(vix_data, curve_data, sector_data, sector_etf, news_sentime
     return {"adjustment": round(adj, 4), "reasons": reasons}
 
 
+def check_yield_curve(yields_data):
+    """detect yield curve inversion (2y > 10y) and return inversion status.
+
+    yields_data: dict with short_rate and long_rate keys (from get_treasury_curve)
+    returns dict with inversion status and spread
+    """
+    if not yields_data:
+        return {"inverted": False, "spread": None, "status": "no data"}
+    short = yields_data.get("short_rate")
+    long = yields_data.get("long_rate")
+    if short is None or long is None:
+        return {"inverted": False, "spread": None, "status": "incomplete data"}
+    spread = round(long - short, 4)
+    inverted = spread < 0
+    if inverted:
+        status = "inverted"
+    elif spread < 0.25:
+        status = "flat"
+    else:
+        status = "normal"
+    return {"inverted": inverted, "spread": spread, "status": status}
+
+
 def analyze_with_macro(tickers):
     """run mooop analysis enhanced with macro data for each ticker.
 

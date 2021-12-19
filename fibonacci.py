@@ -49,6 +49,19 @@ def extension_levels(swing_high, swing_low, direction="up"):
     return levels
 
 
+def extension_targets(swing_low, swing_high):
+    """calculate fibonacci extension levels from a swing.
+
+    returns dict of extension ratios to price levels:
+    1.272, 1.618, 2.0, 2.618
+    """
+    diff = swing_high - swing_low
+    targets = {}
+    for ratio in [1.272, 1.618, 2.0, 2.618]:
+        targets[f"{ratio:.3f}"] = round(swing_low + diff * ratio, 2)
+    return targets
+
+
 def auto_fib(ticker, period="6mo"):
     """automatically find swing points and calculate fib levels.
 
@@ -120,6 +133,40 @@ def support_resistance_from_fib(fib_data, tolerance=0.02):
             })
     zones.sort(key=lambda z: abs(z["distance_pct"]))
     return zones
+
+
+def auto_swing(prices, threshold=0.05):
+    """automatically detect swing highs and lows in a price series.
+
+    a swing high is a local max where price rose and fell by at least threshold.
+    a swing low is a local min where price fell and rose by at least threshold.
+    threshold is a fraction (0.05 = 5%).
+    """
+    if len(prices) < 3:
+        return []
+    swings = []
+    direction = 0
+    last_swing_price = prices[0]
+    last_swing_idx = 0
+    for i in range(1, len(prices)):
+        if direction >= 0 and prices[i] < last_swing_price * (1 - threshold):
+            swings.append({"idx": last_swing_idx, "price": last_swing_price, "type": "high"})
+            direction = -1
+            last_swing_price = prices[i]
+            last_swing_idx = i
+        elif direction <= 0 and prices[i] > last_swing_price * (1 + threshold):
+            swings.append({"idx": last_swing_idx, "price": last_swing_price, "type": "low"})
+            direction = 1
+            last_swing_price = prices[i]
+            last_swing_idx = i
+        else:
+            if direction >= 0 and prices[i] > last_swing_price:
+                last_swing_price = prices[i]
+                last_swing_idx = i
+            elif direction <= 0 and prices[i] < last_swing_price:
+                last_swing_price = prices[i]
+                last_swing_idx = i
+    return swings
 
 
 if __name__ == "__main__":
