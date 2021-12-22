@@ -9,6 +9,7 @@ def split_windows(n_bars, train_pct=0.7, n_windows=5):
     """
     window_size = n_bars // n_windows
     train_size = int(window_size * train_pct)
+    test_size = window_size - train_size
     windows = []
     for i in range(n_windows):
         start = i * window_size
