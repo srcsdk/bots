@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """tax lot tracking with fifo lifo and specific id methods"""
 
-import json
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def add_lot(lots, ticker, shares, cost_basis, date):
