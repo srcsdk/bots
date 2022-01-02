@@ -1,1 +1,1 @@
-# stdlib only (urllib, json, csv, math, tkinter)
+matplotlib>=3.4.0
