@@ -70,6 +70,37 @@ def resample_to_weekly(data):
     return list(weeks.values())
 
 
+def generate_random_data(symbol, days=252, start_price=100):
+    """generate random ohlcv data for testing."""
+    import random
+    data = []
+    price = start_price
+    base_date = datetime(2021, 1, 4)
+    for i in range(days):
+        from datetime import timedelta
+        dt = base_date + timedelta(days=i)
+        if dt.weekday() >= 5:
+            continue
+        change = random.gauss(0.0003, 0.02)
+        price *= (1 + change)
+        high = price * (1 + abs(random.gauss(0, 0.005)))
+        low = price * (1 - abs(random.gauss(0, 0.005)))
+        data.append({
+            "date": dt.strftime("%Y-%m-%d"),
+            "symbol": symbol,
+            "open": round(price * (1 + random.gauss(0, 0.002)), 2),
+            "high": round(high, 2),
+            "low": round(low, 2),
+            "close": round(price, 2),
+            "volume": random.randint(500000, 5000000),
+        })
+    return data
+
+
 if __name__ == "__main__":
-    print("data feed module ready")
-    print("supports: csv load, date filtering, volume normalization")
+    data = generate_random_data("TEST", 50)
+    print(f"generated {len(data)} bars")
+    filtered = filter_date_range(data, "2021-01-10", "2021-02-10")
+    print(f"filtered: {len(filtered)} bars")
+    data = normalize_volume(data)
+    print(f"first bar rel_volume: {data[0]['rel_volume']}")
