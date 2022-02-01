@@ -2,7 +2,6 @@
 """historical and live data feed for backtesting"""
 
 import csv
-import os
 from datetime import datetime
 
 

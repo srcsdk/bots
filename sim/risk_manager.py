@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """risk management for paper trading"""
 
-import math
-
 
 def position_size_risk_pct(capital, risk_pct, entry_price, stop_price):
     """calculate position size based on risk percentage.

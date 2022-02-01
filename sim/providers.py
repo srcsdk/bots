@@ -2,10 +2,7 @@
 """data providers for historical price data"""
 
 import csv
-import json
 import os
-from urllib.request import urlopen, Request
-from urllib.error import URLError
 
 
 def fetch_yahoo_csv(symbol, period="1y"):

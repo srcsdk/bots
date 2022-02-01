@@ -49,6 +49,6 @@ def total_cost(shares, price, commission_fn=None, slippage_bps=5):
 
 if __name__ == "__main__":
     cost = total_cost(100, 150.0)
-    print(f"100 shares @ $150:")
+    print("100 shares @ $150:")
     for k, v in cost.items():
         print(f"  {k}: {v}")

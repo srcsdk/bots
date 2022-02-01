@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """backtest runner for evaluating strategies on historical data"""
 
-from datetime import datetime
-
 
 class BacktestRunner:
     """run a strategy against historical data and collect results."""
@@ -68,7 +66,6 @@ class BacktestRunner:
             return {}
         final = self.equity_curve[-1]["equity"]
         total_return = (final - self.initial_capital) / self.initial_capital
-        wins = [t for t in self.trades if t["action"] == "sell"]
         return {
             "initial_capital": self.initial_capital,
             "final_equity": final,
