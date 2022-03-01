@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """detailed trade logging with entry/exit tracking"""
 
-from datetime import datetime
 
 
 class TradeLog:
