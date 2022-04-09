@@ -1,0 +1,141 @@
+{
+  "generated": "2022-08-20",
+  "period": "2020-01-01 to 2022-06-30",
+  "rankings": [
+    {
+      "name": "rsi_14",
+      "solo_sharpe": 0.87,
+      "solo_return": 15.82,
+      "best_pair": "sma_50",
+      "pair_sharpe": 1.31,
+      "worst_market": "sideways_choppy",
+      "best_market": "bull_high_vol"
+    },
+    {
+      "name": "sma_20",
+      "solo_sharpe": 0.72,
+      "solo_return": 11.45,
+      "best_pair": "rsi_14",
+      "pair_sharpe": 1.18,
+      "worst_market": "sideways_quiet",
+      "best_market": "bull_low_vol"
+    },
+    {
+      "name": "sma_50",
+      "solo_sharpe": 0.95,
+      "solo_return": 18.33,
+      "best_pair": "macd",
+      "pair_sharpe": 1.42,
+      "worst_market": "sideways_choppy",
+      "best_market": "bull_low_vol"
+    },
+    {
+      "name": "ema_12",
+      "solo_sharpe": 0.68,
+      "solo_return": 10.21,
+      "best_pair": "ema_26",
+      "pair_sharpe": 1.05,
+      "worst_market": "bear_high_vol",
+      "best_market": "bull_high_vol"
+    },
+    {
+      "name": "ema_26",
+      "solo_sharpe": 0.81,
+      "solo_return": 14.67,
+      "best_pair": "rsi_14",
+      "pair_sharpe": 1.28,
+      "worst_market": "sideways_choppy",
+      "best_market": "bull_low_vol"
+    },
+    {
+      "name": "macd",
+      "solo_sharpe": 1.34,
+      "solo_return": 34.21,
+      "best_pair": "rsi_14",
+      "pair_sharpe": 1.55,
+      "worst_market": "sideways_quiet",
+      "best_market": "bull_high_vol"
+    },
+    {
+      "name": "bollinger_20",
+      "solo_sharpe": 0.52,
+      "solo_return": 9.34,
+      "best_pair": "rsi_14",
+      "pair_sharpe": 0.98,
+      "worst_market": "bear_high_vol",
+      "best_market": "sideways_choppy"
+    },
+    {
+      "name": "vwap",
+      "solo_sharpe": 1.05,
+      "solo_return": 21.67,
+      "best_pair": "volume_profile",
+      "pair_sharpe": 1.38,
+      "worst_market": "bear_low_vol",
+      "best_market": "bull_high_vol"
+    },
+    {
+      "name": "atr_14",
+      "solo_sharpe": 0.61,
+      "solo_return": 8.92,
+      "best_pair": "sma_20",
+      "pair_sharpe": 0.89,
+      "worst_market": "sideways_quiet",
+      "best_market": "bear_high_vol"
+    },
+    {
+      "name": "obv",
+      "solo_sharpe": 0.74,
+      "solo_return": 12.18,
+      "best_pair": "macd",
+      "pair_sharpe": 1.21,
+      "worst_market": "sideways_quiet",
+      "best_market": "bull_high_vol"
+    },
+    {
+      "name": "stochastic",
+      "solo_sharpe": 0.58,
+      "solo_return": 7.65,
+      "best_pair": "rsi_14",
+      "pair_sharpe": 0.95,
+      "worst_market": "bear_high_vol",
+      "best_market": "sideways_choppy"
+    },
+    {
+      "name": "adx_14",
+      "solo_sharpe": 0.83,
+      "solo_return": 16.44,
+      "best_pair": "macd",
+      "pair_sharpe": 1.35,
+      "worst_market": "sideways_quiet",
+      "best_market": "bull_high_vol"
+    },
+    {
+      "name": "cci_20",
+      "solo_sharpe": 0.55,
+      "solo_return": 8.11,
+      "best_pair": "sma_50",
+      "pair_sharpe": 0.91,
+      "worst_market": "bear_low_vol",
+      "best_market": "bull_low_vol"
+    },
+    {
+      "name": "volume_profile",
+      "solo_sharpe": 0.92,
+      "solo_return": 17.88,
+      "best_pair": "vwap",
+      "pair_sharpe": 1.38,
+      "worst_market": "bear_low_vol",
+      "best_market": "bull_high_vol"
+    },
+    {
+      "name": "keltner_20",
+      "solo_sharpe": 0.63,
+      "solo_return": 9.55,
+      "best_pair": "atr_14",
+      "pair_sharpe": 0.88,
+      "worst_market": "bear_high_vol",
+      "best_market": "sideways_choppy"
+    }
+  ]
+}
