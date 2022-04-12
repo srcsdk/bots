@@ -72,15 +72,12 @@ def regime_summary(prices):
 def strategy_for_regime(regime):
     """suggest strategy parameters based on market regime."""
     suggestions = {
-        "uptrend": {
-            "bias": "long", "position_size": 1.0, "stop_distance": 0.03,
-        },
-        "downtrend": {
-            "bias": "short", "position_size": 0.5, "stop_distance": 0.02,
-        },
-        "sideways": {
-            "bias": "neutral", "position_size": 0.3, "stop_distance": 0.015,
-        },
+        "uptrend": {"bias": "long", "position_size": 1.0,
+                     "stop_distance": 0.03},
+        "downtrend": {"bias": "short", "position_size": 0.5,
+                       "stop_distance": 0.02},
+        "sideways": {"bias": "neutral", "position_size": 0.3,
+                      "stop_distance": 0.015},
     }
     trend = regime.get("trend", "sideways")
     params = suggestions.get(trend, suggestions["sideways"])
