@@ -2,7 +2,6 @@
 """trade execution simulator with realistic fills"""
 
 import random
-import time
 
 
 class ExecutionSimulator:
