@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """backtrader integration adapter for comparing engines"""
 
-import math
-import statistics
 from sim.backtest_engine import BacktestEngine
 
 try:
