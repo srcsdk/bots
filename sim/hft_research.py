@@ -3,6 +3,7 @@
 
 import math
 import statistics
+from collections import deque
 
 
 class OrderBookAnalyzer:
