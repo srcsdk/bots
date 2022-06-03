@@ -19,8 +19,8 @@ class IBKRClient:
     def connect(self):
         """establish connection to ibkr gateway."""
         try:
-            from ibapi.client import EClient  # noqa: F401
-            from ibapi.wrapper import EWrapper  # noqa: F401
+            from ibapi.client import EClient
+            from ibapi.wrapper import EWrapper
             self.connected = True
             return True
         except ImportError:
