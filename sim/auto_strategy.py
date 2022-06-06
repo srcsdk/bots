@@ -3,7 +3,6 @@
 
 import math
 import statistics
-from collections import defaultdict
 
 
 def _sharpe(returns, risk_free=0.02):
@@ -176,7 +175,6 @@ class PatternToStrategy:
             fn(bars, positions) -> signal or None
         """
         active_rules = rules or self.rules
-        time_rules = [r for r in active_rules if r["type"] == "time_entry"]
         regime_entries = [r for r in active_rules if r["type"] == "regime_entry"]
         regime_exits = [r for r in active_rules if r["type"] == "regime_exit"]
 
