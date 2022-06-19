@@ -1,131 +1,137 @@
 #!/usr/bin/env python3
-"""data ingestion and transformation pipeline"""
+"""data pipeline for collecting and normalizing market data"""
 
 import csv
 import json
 import os
+from datetime import datetime
 
 
 class DataPipeline:
-    """pipeline for loading, transforming, and caching market data."""
+    """collect, normalize, and store market data for backtesting."""
 
-    def __init__(self, cache_dir="cache"):
-        self.cache_dir = cache_dir
-        os.makedirs(cache_dir, exist_ok=True)
-        self.transformers = []
+    def __init__(self, data_dir="data"):
+        self.data_dir = data_dir
+        os.makedirs(data_dir, exist_ok=True)
+        self.cache = {}
 
-    def add_transform(self, func):
-        """add a transformation step to the pipeline."""
-        self.transformers.append(func)
-        return self
-
-    def load_csv(self, filepath, date_col="date"):
-        """load data from csv file."""
-        data = []
+    def load_csv(self, filepath, date_col="Date", ohlcv_map=None):
+        """load ohlcv data from csv file."""
+        if not ohlcv_map:
+            ohlcv_map = {
+                "open": "Open", "high": "High", "low": "Low",
+                "close": "Close", "volume": "Volume",
+            }
+        bars = []
         with open(filepath) as f:
             reader = csv.DictReader(f)
             for row in reader:
-                for key in row:
-                    if key != date_col:
-                        try:
-                            row[key] = float(row[key])
-                        except (ValueError, TypeError):
-                            pass
-                data.append(row)
-        return data
+                bar = {"date": row.get(date_col, "")}
+                for key, col in ohlcv_map.items():
+                    try:
+                        bar[key] = float(row.get(col, 0))
+                    except (ValueError, TypeError):
+                        bar[key] = 0
+                bars.append(bar)
+        bars.sort(key=lambda b: b["date"])
+        return bars
 
-    def load_json(self, filepath):
-        """load data from json file."""
-        with open(filepath) as f:
-            return json.load(f)
+    def normalize(self, bars):
+        """normalize bar data to consistent format."""
+        normalized = []
+        for bar in bars:
+            entry = {
+                "date": bar.get("date", ""),
+                "open": float(bar.get("open", 0)),
+                "high": float(bar.get("high", 0)),
+                "low": float(bar.get("low", 0)),
+                "close": float(bar.get("close", 0)),
+                "volume": int(float(bar.get("volume", 0))),
+            }
+            if entry["high"] < entry["low"]:
+                entry["high"], entry["low"] = entry["low"], entry["high"]
+            normalized.append(entry)
+        return normalized
 
-    def process(self, data):
-        """run data through all transform steps."""
-        for transform in self.transformers:
-            data = transform(data)
-        return data
+    def save(self, symbol, bars, format="json"):
+        """save bar data to file."""
+        filename = f"{symbol}.{format}"
+        filepath = os.path.join(self.data_dir, filename)
+        if format == "json":
+            with open(filepath, "w") as f:
+                json.dump(bars, f, indent=2)
+        elif format == "csv":
+            if bars:
+                with open(filepath, "w", newline="") as f:
+                    writer = csv.DictWriter(f, fieldnames=bars[0].keys())
+                    writer.writeheader()
+                    writer.writerows(bars)
+        self.cache[symbol] = bars
+        return filepath
 
-    def cache_data(self, key, data):
-        """cache processed data."""
-        filepath = os.path.join(self.cache_dir, f"{key}.json")
-        with open(filepath, "w") as f:
-            json.dump(data, f)
+    def load(self, symbol):
+        """load saved bar data."""
+        if symbol in self.cache:
+            return self.cache[symbol]
+        json_path = os.path.join(self.data_dir, f"{symbol}.json")
+        if os.path.isfile(json_path):
+            with open(json_path) as f:
+                bars = json.load(f)
+            self.cache[symbol] = bars
+            return bars
+        return []
 
-    def load_cached(self, key):
-        """load cached data if available."""
-        filepath = os.path.join(self.cache_dir, f"{key}.json")
-        if os.path.isfile(filepath):
-            with open(filepath) as f:
-                return json.load(f)
-        return None
+    def merge_sources(self, bars_list):
+        """merge bars from multiple sources, preferring higher volume."""
+        by_date = {}
+        for bars in bars_list:
+            for bar in bars:
+                date = bar["date"]
+                if date not in by_date:
+                    by_date[date] = bar
+                elif bar.get("volume", 0) > by_date[date].get("volume", 0):
+                    by_date[date] = bar
+        merged = sorted(by_date.values(), key=lambda b: b["date"])
+        return merged
 
-    def clear_cache(self):
-        """remove all cached data."""
-        for name in os.listdir(self.cache_dir):
-            filepath = os.path.join(self.cache_dir, name)
-            if os.path.isfile(filepath):
-                os.remove(filepath)
+    def split_periods(self, bars, train_pct=0.7):
+        """split data into training and test periods."""
+        split_idx = int(len(bars) * train_pct)
+        return bars[:split_idx], bars[split_idx:]
 
-
-def fill_missing(data, fields=None):
-    """forward-fill missing values in data."""
-    if not data:
-        return data
-    if fields is None:
-        fields = [k for k in data[0] if k != "date"]
-    last_values = {}
-    for row in data:
-        for field in fields:
-            val = row.get(field)
-            if val is None or val == "":
-                row[field] = last_values.get(field, 0)
+    def resample(self, bars, period="weekly"):
+        """resample daily bars to weekly or monthly."""
+        if not bars:
+            return []
+        groups = {}
+        for bar in bars:
+            try:
+                dt = datetime.strptime(bar["date"], "%Y-%m-%d")
+            except ValueError:
+                continue
+            if period == "weekly":
+                key = dt.strftime("%Y-W%W")
+            elif period == "monthly":
+                key = dt.strftime("%Y-%m")
             else:
-                last_values[field] = val
-    return data
-
-
-def add_returns(data, price_field="close"):
-    """add daily return column to data."""
-    for i in range(len(data)):
-        if i == 0:
-            data[i]["return"] = 0
-        else:
-            prev = data[i - 1].get(price_field, 0)
-            curr = data[i].get(price_field, 0)
-            if prev > 0:
-                data[i]["return"] = round((curr - prev) / prev, 6)
-            else:
-                data[i]["return"] = 0
-    return data
-
-
-def add_moving_average(data, period=20, field="close"):
-    """add moving average column to data."""
-    for i in range(len(data)):
-        if i < period - 1:
-            data[i][f"ma_{period}"] = None
-        else:
-            values = [data[j][field] for j in range(i - period + 1, i + 1)]
-            data[i][f"ma_{period}"] = round(sum(values) / period, 4)
-    return data
+                key = bar["date"]
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(bar)
+        resampled = []
+        for key in sorted(groups.keys()):
+            group = groups[key]
+            resampled.append({
+                "date": group[0]["date"],
+                "open": group[0]["open"],
+                "high": max(b["high"] for b in group),
+                "low": min(b["low"] for b in group),
+                "close": group[-1]["close"],
+                "volume": sum(b["volume"] for b in group),
+            })
+        return resampled
 
 
 if __name__ == "__main__":
-    import random
-    random.seed(42)
-    sample = []
-    price = 100
-    for i in range(50):
-        price *= (1 + random.gauss(0, 0.02))
-        sample.append({
-            "date": f"2022-01-{i + 1:02d}",
-            "close": round(price, 2),
-            "volume": random.randint(100000, 500000),
-        })
-    pipeline = DataPipeline("/tmp/test_cache")
-    pipeline.add_transform(add_returns)
-    pipeline.add_transform(lambda d: add_moving_average(d, 10))
-    processed = pipeline.process(sample)
-    for row in processed[-5:]:
-        print(f"  {row['date']}: close={row['close']}, "
-              f"return={row['return']:.4f}, ma_10={row.get('ma_10')}")
+    pipeline = DataPipeline()
+    print(f"data pipeline ready, dir: {pipeline.data_dir}")
