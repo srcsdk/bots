@@ -2,6 +2,7 @@
 """detailed trade logging with entry/exit tracking"""
 
 
+
 class TradeLog:
     """track individual trades with entry/exit details."""
 
