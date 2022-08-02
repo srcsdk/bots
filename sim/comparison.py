@@ -2,7 +2,6 @@
 """side-by-side backtest comparison tools"""
 
 import json
-import os
 
 
 def load_results(filepath):
