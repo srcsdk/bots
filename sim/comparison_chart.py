@@ -8,7 +8,6 @@ try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
     from matplotlib.ticker import FuncFormatter
     HAS_MPL = True
 except ImportError:

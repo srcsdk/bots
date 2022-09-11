@@ -8,10 +8,10 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sim.backtrader_adapter import BacktraderAdapter, generate_sample_bars
-from sim.strategy_registry import STRATEGY_REGISTRY, wrap_for_backtest
-from sim.data_source import DataSource, generate_synthetic_bars
-from sim.comparison_chart import ComparisonChart, calc_sharpe
+from sim.backtrader_adapter import BacktraderAdapter  # noqa: E402
+from sim.strategy_registry import STRATEGY_REGISTRY, wrap_for_backtest  # noqa: E402
+from sim.data_source import DataSource, generate_synthetic_bars  # noqa: E402
+from sim.comparison_chart import ComparisonChart, calc_sharpe  # noqa: E402
 
 
 class FullBacktest:
