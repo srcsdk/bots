@@ -284,52 +284,20 @@ def print_scan(results):
               f"{r['date']:<12} {matched_names}")
 
 
-def fetch_fundamentals(ticker):
-    """fetch fundamental metrics from yahoo finance summary page.
-
-    scrapes the quote summary for pe ratio, market cap, earnings,
-    and other key fundamental data points.
-    """
-    from urllib.request import urlopen, Request
-    from urllib.error import URLError
-    import json
-
-    url = (
-        f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{ticker}"
-        f"?modules=defaultKeyStatistics,financialData,summaryDetail"
-    )
-    headers = {"User-Agent": "Mozilla/5.0"}
-    try:
-        req = Request(url, headers=headers)
-        resp = urlopen(req, timeout=15)
-        data = json.loads(resp.read().decode())
-    except (URLError, json.JSONDecodeError, KeyError):
-        return {"ticker": ticker, "error": "fetch failed"}
-    result = data.get("quoteSummary", {}).get("result", [{}])
-    if not result:
-        return {"ticker": ticker, "error": "no data"}
-    key_stats = result[0].get("defaultKeyStatistics", {})
-    fin = result[0].get("financialData", {})
-    summary = result[0].get("summaryDetail", {})
-
-    def _val(d, key):
-        v = d.get(key, {})
-        if isinstance(v, dict):
-            return v.get("raw")
-        return v
-
+def add_fundamental_stub(ticker):
+    """return a dict with placeholder fundamental metrics for future api integration"""
     return {
         "ticker": ticker,
-        "pe_ratio": _val(summary, "trailingPE"),
-        "forward_pe": _val(key_stats, "forwardPE"),
-        "revenue_growth": _val(fin, "revenueGrowth"),
-        "earnings_growth": _val(fin, "earningsGrowth"),
-        "debt_to_equity": _val(fin, "debtToEquity"),
-        "profit_margin": _val(fin, "profitMargins"),
-        "roe": _val(fin, "returnOnEquity"),
-        "free_cash_flow": _val(fin, "freeCashflow"),
-        "dividend_yield": _val(summary, "dividendYield"),
-        "market_cap": _val(summary, "marketCap"),
+        "pe_ratio": None,
+        "forward_pe": None,
+        "revenue_growth": None,
+        "earnings_growth": None,
+        "debt_to_equity": None,
+        "profit_margin": None,
+        "roe": None,
+        "free_cash_flow": None,
+        "dividend_yield": None,
+        "market_cap": None,
     }
 
 
