@@ -4,6 +4,9 @@
 import json
 import math
 import os
+import statistics
+import time
+from collections import defaultdict
 from datetime import datetime
 
 
@@ -166,6 +169,7 @@ class StrategyOrchestrator:
         """find new patterns and auto-generate strategies."""
         from sim.pattern_detect import (
             detect_time_patterns, detect_streak_patterns,
+            detect_correlation,
         )
         from sim.auto_strategy import PatternToStrategy, backtest_generated
         trades = []
