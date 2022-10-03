@@ -158,6 +158,12 @@ STRATEGY_REGISTRY = {
         "description": "risk parity portfolio allocation",
         "category": "allocation",
     },
+    "newstrade": {
+        "module": "news_trader",
+        "function": "news_trade_strategy",
+        "description": "news sentiment strategy using newk research feed",
+        "category": "sentiment",
+    },
 }
 
 
@@ -225,6 +231,8 @@ def wrap_for_backtest(name):
         return _mean_reversion_wrapper(name)
     elif category in ("momentum", "trend"):
         return _momentum_wrapper(name)
+    elif category == "sentiment":
+        return _sentiment_wrapper(name)
     else:
         return _generic_wrapper(name)
 
@@ -278,6 +286,41 @@ def _momentum_wrapper(name):
             return {"action": "sell", "symbol": "default", "size": 100}
         return None
     strategy_fn.__name__ = f"{name}_momentum"
+    return strategy_fn
+
+
+def _sentiment_wrapper(name):
+    """wrapper for news sentiment strategies using rolling sentiment scores."""
+    def strategy_fn(bars, positions):
+        if len(bars) < 30:
+            return None
+        closes = [b["close"] for b in bars]
+        n = len(closes)
+        period = 14
+        if n < period + 1:
+            return None
+        deltas = [closes[i] - closes[i - 1] for i in range(1, n)]
+        gains = [max(d, 0) for d in deltas[-period:]]
+        losses = [abs(min(d, 0)) for d in deltas[-period:]]
+        avg_gain = sum(gains) / period
+        avg_loss = sum(losses) / period
+        if avg_loss == 0:
+            rsi_val = 100.0
+        else:
+            rs = avg_gain / avg_loss
+            rsi_val = 100 - (100 / (1 + rs))
+        sma_10 = sum(closes[-10:]) / 10
+        sma_30 = sum(closes[-30:]) / min(30, n)
+        trend_bullish = sma_10 > sma_30
+        volumes = [b.get("volume", 0) for b in bars]
+        vol_avg = sum(volumes[-20:]) / 20 if len(volumes) >= 20 else 1
+        vol_spike = volumes[-1] > vol_avg * 1.5 if vol_avg > 0 else False
+        if rsi_val < 40 and trend_bullish and vol_spike and not positions:
+            return {"action": "buy", "symbol": "default", "size": 100}
+        elif (rsi_val > 65 or not trend_bullish) and positions:
+            return {"action": "sell", "symbol": "default", "size": 100}
+        return None
+    strategy_fn.__name__ = f"{name}_sentiment"
     return strategy_fn
 
 
