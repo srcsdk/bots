@@ -125,13 +125,51 @@ def cached_fetch(ticker, period, ttl=3600):
 
 
 def fetch_intraday(ticker, interval="5m"):
-    """fetch intraday ohlc data.
+    """fetch intraday ohlc data from yahoo finance.
 
-    placeholder for future intraday data implementation.
-    currently returns empty list.
+    uses the same yahoo finance api with shorter intervals.
+    valid intervals: 1m, 2m, 5m, 15m, 30m, 60m, 90m.
+    intraday data limited to last 7 days by yahoo.
     """
-    # todo: implement intraday data fetching
-    return []
+    valid = {"1m", "2m", "5m", "15m", "30m", "60m", "90m"}
+    if interval not in valid:
+        interval = "5m"
+    end = int(time.time())
+    start = end - (7 * 86400)
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+        f"?period1={start}&period2={end}&interval={interval}"
+    )
+    headers = {"User-Agent": "Mozilla/5.0"}
+    try:
+        req = Request(url, headers=headers)
+        resp = urlopen(req, timeout=15)
+        data = json.loads(resp.read().decode())
+    except (URLError, json.JSONDecodeError, KeyError):
+        return []
+    result = data.get("chart", {}).get("result", [])
+    if not result:
+        return []
+    timestamps = result[0].get("timestamp", [])
+    quote = result[0].get("indicators", {}).get("quote", [{}])[0]
+    rows = []
+    for i, ts in enumerate(timestamps):
+        o = quote.get("open", [None] * len(timestamps))[i]
+        h = quote.get("high", [None] * len(timestamps))[i]
+        low = quote.get("low", [None] * len(timestamps))[i]
+        c = quote.get("close", [None] * len(timestamps))[i]
+        v = quote.get("volume", [None] * len(timestamps))[i]
+        if None in (o, h, low, c):
+            continue
+        rows.append({
+            "datetime": datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M"),
+            "open": round(o, 4),
+            "high": round(h, 4),
+            "low": round(low, 4),
+            "close": round(c, 4),
+            "volume": v or 0,
+        })
+    return rows
 
 
 def cache_path(ticker, period, interval):
