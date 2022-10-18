@@ -6,7 +6,6 @@ import math
 import os
 import statistics
 from collections import defaultdict
-from datetime import datetime
 
 
 def load_macro_data(filepath=None):
@@ -45,7 +44,6 @@ def load_news_sentiment(filepath=None):
             return json.load(f)
     import hashlib
     sentiment = {}
-    base = datetime(2022, 1, 1)
     for day_offset in range(180):
         date_str = f"2022-{(day_offset // 30) + 1:02d}-{(day_offset % 30) + 1:02d}"
         h = int(hashlib.md5(date_str.encode()).hexdigest()[:8], 16)
