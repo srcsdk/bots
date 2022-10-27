@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """live market data feed for real-time strategy execution"""
 
+import json
 import time
 import threading
 from collections import deque

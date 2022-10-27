@@ -110,33 +110,23 @@ def consensus_picks(multi_results, min_strategies=2):
     return consensus
 
 
-def parallel_scan(tickers, strategy, period="1y", workers=4):
-    """scan multiple tickers concurrently using thread pool.
+def parallel_scan_stub(tickers, strategy, period="1y"):
+    """placeholder for concurrent ticker scanning.
 
-    spawns up to `workers` threads to scan tickers in parallel.
-    returns list of (ticker, signals) tuples.
+    wraps sequential scanning with the same interface that a
+    threaded or multiprocessing version would use.
+    returns list of (ticker, signals) tuples
     """
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-
-    def _scan_one(ticker):
+    results = []
+    for ticker in tickers:
         try:
             mod = __import__(strategy)
             if hasattr(mod, "scan"):
                 signals = mod.scan(ticker, period)
                 if signals:
-                    return (ticker, signals)
+                    results.append((ticker, signals))
         except (ImportError, AttributeError):
-            pass
-        return None
-
-    results = []
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {pool.submit(_scan_one, t): t for t in tickers}
-        for future in as_completed(futures):
-            result = future.result()
-            if result:
-                results.append(result)
-    results.sort(key=lambda r: r[0])
+            continue
     return results
 
 
