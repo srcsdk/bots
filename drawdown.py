@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# improved: tracks recovery time from drawdowns
 """drawdown analysis and tracking"""
 
 
