@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# fixed: handle none values and validate inputs
 """fibonacci retracement and extension levels"""
 
 import sys
