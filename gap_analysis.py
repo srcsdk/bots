@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# improved: breakaway, runaway, exhaustion gap types
 """gap analysis with fill probability estimation"""
 
 
