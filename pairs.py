@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# improved: adf-based cointegration validation
 """pair trading: statistical arbitrage between correlated stocks"""
 
 import sys

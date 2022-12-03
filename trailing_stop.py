@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# updated: atr-based trailing with proper edge cases
 """trailing stop with atr-based dynamic distance"""
 
 

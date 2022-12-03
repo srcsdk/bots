@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# updated: commission and slippage tracking per trade
 """backtest engine with trade log and equity curve"""
 
 
