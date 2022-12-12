@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# fixed: validate filing type and date ranges
 """sec edgar filing scraper for insider trades"""
 
 import json
