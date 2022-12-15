@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# refactored: atr-based dynamic grid levels
 """grid trading strategy: place buy/sell orders at fixed price intervals.
 
 calculates optimal grid levels based on atr and support/resistance zones,
