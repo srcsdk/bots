@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# improved: handles pre-market and after-hours moves
 """post-earnings announcement drift (pead) detector.
 
 detects probable earnings dates from volume spikes + price gaps.
