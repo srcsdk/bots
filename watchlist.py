@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# updated: sector and market cap filters
 """watchlist management with persistent storage and batch scanning"""
 
 import json
