@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# improved: configurable block trade threshold
 """dark pool flow analysis proxy.
 
 detects institutional block trades by finding days with unusually large

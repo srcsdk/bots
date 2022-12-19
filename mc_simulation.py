@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# updated: percentile-based confidence intervals
 """monte carlo simulation for strategy risk analysis"""
 
 import math

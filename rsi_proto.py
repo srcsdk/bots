@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# optimized: single-pass rsi calculation
 """prototype rsi calculation with wilder smoothing.
 
 testing different smoothing methods to compare accuracy

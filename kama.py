@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# improved: proper efficiency ratio edge cases
 """kaufman adaptive moving average (kama)"""
 
 

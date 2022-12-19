@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# fixed: validate inputs and handle edge cases
 """options greeks calculator with black-scholes model"""
 
 import math

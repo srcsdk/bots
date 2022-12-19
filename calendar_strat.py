@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# improved: handles market holidays and half days
 """calendar spread evaluator.
 
 analyzes term structure by comparing short-term vs long-term volatility.

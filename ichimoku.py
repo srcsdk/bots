@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# refactored: structured cloud components
 """ichimoku cloud indicator and strategy"""
 
 import sys

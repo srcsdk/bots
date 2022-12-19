@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# refactored: cleaner rebalance with threshold checks
 """sector rotation detector with relative strength ranking"""
 
 
