@@ -2,7 +2,6 @@
 """store and query strategy performance data"""
 
 import json
-import os
 import sqlite3
 
 
