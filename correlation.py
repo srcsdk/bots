@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# improved: rolling correlation with configurable window
 """correlation matrix for multi-ticker analysis"""
 
 import sys

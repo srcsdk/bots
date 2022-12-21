@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# updated: proper poc and value area calculation
 """volume profile analysis with point of control and value area"""
 
 from collections import defaultdict

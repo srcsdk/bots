@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# refactored: generator-based windowing
 """walk-forward optimization for strategy parameters"""
 
 

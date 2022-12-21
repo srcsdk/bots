@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# improved: timeout handling and retry logic
 """prototype: test yahoo finance api access and data format"""
 
 import json
