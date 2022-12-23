@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# fixed: cleanup temp files on pipeline failure
 """data pipeline for collecting and normalizing market data"""
 
 import csv
