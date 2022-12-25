@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# improved: tracks correlation between positions
 """risk management for paper trading"""
 
 
