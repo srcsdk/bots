@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# updated: csv export with configurable columns
 """export backtest results in various formats"""
 
 import csv
