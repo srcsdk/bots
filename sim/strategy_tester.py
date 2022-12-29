@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# refactored: compare against spy benchmark
 """strategy tester with parameter sweeps and scoring"""
 
 from sim.backtest_runner import BacktestRunner
